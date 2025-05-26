@@ -40,8 +40,7 @@ namespace sqpnl
       return index < 0 || index >= num_solutions_ ? nullptr : &solutions_[index];
     }
 
-    //
-    // Return average reprojection errors
+    //! Return average reprojection errors
     inline std::vector<double> AverageSquaredProjectionErrors() const
     {
       std::vector<double> avg_errors;
@@ -54,7 +53,7 @@ namespace sqpnl
     }
     const std::vector<double> &Weights() const { return weights_; }
 
-    //! Constructor #1: Initialize solver from pairs of points
+    //! Constructor #1: Create solver from pairs of points
     template <typename Point3D, typename Point2D, typename Pw = double>
     inline PnLSolver(                                       //
         const std::vector<Point3D> &points1,                //
@@ -120,11 +119,11 @@ namespace sqpnl
         // Populate Omega, Sum(B*B'), Sum(B*B'*M), sum_w, cheir_points_mean
         AccumulateDataMatrices(w, lines_[i], projections_[i], cheir_points_[i], sum_w, cheir_points_mean_, sum_BBt, sum_BBtM, sum_M);
       }
-
+      // Finalize data matrices (fill lower triangles, etc.)
       FinalizeDataMatrices(sum_w, sum_BBt, sum_BBtM, sum_M);
     }
 
-    //! Constructor (initializes Omega, P and U, s, i.e. the decomposition of Omega)
+    //! Constructor #2: Create a solver from Line and Projection objects
     template <typename Pp = double, typename Pw = double>
     inline PnLSolver(                                                                                //
         const std::vector<Line> &lines,                                                              //

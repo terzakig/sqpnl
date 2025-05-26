@@ -165,37 +165,42 @@ namespace sqpnl
     sum_BBt(2, 2) += w * BBt(2, 2);
 
     // Sum(wi*Bi*Bi'*Mi) where the matrix Mi is such that. Mi*r = R'*Pi (Pi is the line's Pi_hat)
-    sum_BBtM(0, 0) += w * line.P_hat[0] * BBt(0, 0);
-    sum_BBtM(0, 1) += w * line.P_hat[0] * BBt(0, 1);
-    sum_BBtM(0, 2) += w * line.P_hat[0] * BBt(0, 2);
-    sum_BBtM(0, 3) += w * line.P_hat[1] * BBt(0, 0);
-    sum_BBtM(0, 4) += w * line.P_hat[1] * BBt(0, 1);
-    sum_BBtM(0, 5) += w * line.P_hat[1] * BBt(0, 2);
-    sum_BBtM(0, 6) += w * line.P_hat[2] * BBt(0, 0);
-    sum_BBtM(0, 7) += w * line.P_hat[2] * BBt(0, 1);
-    sum_BBtM(0, 8) += w * line.P_hat[2] * BBt(0, 2);
+    const double norm_P_hat = line.P_hat.norm();
+    const double X = line.P_hat[0] + 0.5 * line.u[0];
+    const double Y = line.P_hat[1] + 0.5 * line.u[1];
+    const double Z = line.P_hat[2] + 0.5 * line.u[2];
 
-    sum_BBtM(1, 1) += w * line.P_hat[0] * BBt(1, 1);
-    sum_BBtM(1, 2) += w * line.P_hat[0] * BBt(1, 2);
-    sum_BBtM(1, 4) += w * line.P_hat[1] * BBt(1, 1);
-    sum_BBtM(1, 5) += w * line.P_hat[1] * BBt(1, 2);
-    sum_BBtM(1, 7) += w * line.P_hat[2] * BBt(1, 1);
-    sum_BBtM(1, 8) += w * line.P_hat[2] * BBt(1, 2);
+    sum_BBtM(0, 0) += w * X * BBt(0, 0);
+    sum_BBtM(0, 1) += w * X * BBt(0, 1);
+    sum_BBtM(0, 2) += w * X * BBt(0, 2);
+    sum_BBtM(0, 3) += w * Y * BBt(0, 0);
+    sum_BBtM(0, 4) += w * Y * BBt(0, 1);
+    sum_BBtM(0, 5) += w * Y * BBt(0, 2);
+    sum_BBtM(0, 6) += w * Z * BBt(0, 0);
+    sum_BBtM(0, 7) += w * Z * BBt(0, 1);
+    sum_BBtM(0, 8) += w * Z * BBt(0, 2);
 
-    sum_BBtM(2, 2) += w * line.P_hat[0] * BBt(2, 2);
-    sum_BBtM(2, 5) += w * line.P_hat[1] * BBt(2, 2);
-    sum_BBtM(2, 8) += w * line.P_hat[2] * BBt(2, 2);
+    sum_BBtM(1, 1) += w * X * BBt(1, 1);
+    sum_BBtM(1, 2) += w * X * BBt(1, 2);
+    sum_BBtM(1, 4) += w * Y * BBt(1, 1);
+    sum_BBtM(1, 5) += w * Y * BBt(1, 2);
+    sum_BBtM(1, 7) += w * Z * BBt(1, 1);
+    sum_BBtM(1, 8) += w * Z * BBt(1, 2);
+
+    sum_BBtM(2, 2) += w * X * BBt(2, 2);
+    sum_BBtM(2, 5) += w * Y * BBt(2, 2);
+    sum_BBtM(2, 8) += w * Z * BBt(2, 2);
 
     // Sum(wi*Mi)
-    sum_M(0, 0) += w * line.P_hat[0];
-    sum_M(0, 3) += w * line.P_hat[1];
-    sum_M(0, 6) += w * line.P_hat[2];
-    sum_M(1, 1) += w * line.P_hat[0];
-    sum_M(1, 4) += w * line.P_hat[1];
-    sum_M(1, 7) += w * line.P_hat[2];
-    sum_M(2, 2) += w * line.P_hat[0];
-    sum_M(2, 5) += w * line.P_hat[1];
-    sum_M(2, 8) += w * line.P_hat[2];
+    sum_M(0, 0) += w * X;
+    sum_M(0, 3) += w * Y;
+    sum_M(0, 6) += w * Z;
+    sum_M(1, 1) += w * X;
+    sum_M(1, 4) += w * Y;
+    sum_M(1, 7) += w * Z;
+    sum_M(2, 2) += w * X;
+    sum_M(2, 5) += w * Y;
+    sum_M(2, 8) += w * Z;
   }
 
   void PnLSolver::FinalizeDataMatrices(      //
