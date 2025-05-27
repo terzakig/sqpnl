@@ -9,17 +9,14 @@
 
 //
 // Generate noisy PnP data
-void GenerateSyntheticLines(                                   //
-    int n,                                                     //
-    cv::Matx<double, 3, 3> &R,                                 //
-    cv::Vec<double, 3> &t,                                     //
-    std::vector<Eigen::Vector<double, 3>> &points1,            //
-    std::vector<Eigen::Vector<double, 3>> &points2,            //
-    std::vector<Eigen::Vector<double, 2>> &projections1,       //
-    std::vector<Eigen::Vector<double, 2>> &projections2,       //
-    std::vector<Eigen::Vector<double, 2>> &noisy_projections1, //
-    std::vector<Eigen::Vector<double, 2>> &noisy_projections2, //
-    const double &std_pixel_noise = 0.0,                       //
+void GenerateSyntheticLines(                           //
+    int n,                                             //
+    cv::Matx<double, 3, 3> &R,                         //
+    cv::Vec<double, 3> &t,                             //
+    std::vector<sqpnl::Line> &lines,                   //
+    std::vector<sqpnl::Projection> &projections,       //
+    std::vector<sqpnl::Projection> &noisy_projections, //
+    const double &std_pixel_noise = 0.0,               //
     const double &radius = 1.5)
 {
   assert(n > 2);
@@ -65,22 +62,17 @@ void GenerateSyntheticLines(                                   //
   std::normal_distribution<double> camera_position(0.0, depth / 25);
   cv::Vec<double, 3> pos(camera_position(generator), camera_position(generator), camera_position(generator));
 
-  points1.clear();
-  points2.clear();
-
-  projections1.clear();
-  projections2.clear();
-
-  noisy_projections1.clear();
-  noisy_projections2.clear();
+  lines.clear();
+  projections.clear();
+  noisy_projections.clear();
 
   std::normal_distribution<double> projection_noise(0.0, std_noise);
 
-  while (static_cast<int>(points1.size()) < n)
+  while (static_cast<int>(lines.size()) < n)
   {
-    std::vector<cv::Vec3d> sampled_line;
-    std::vector<cv::Vec2d> sampled_projection;
-    std::vector<cv::Vec2d> sampled_noisy_projection;
+    std::vector<cv::Vec3d> sampled_line_pts;
+    std::vector<cv::Vec2d> sampled_projection_pts;
+    std::vector<cv::Vec2d> sampled_noisy_projection_pts;
     bool good_sample = true;
     for (size_t i = 0; i < 2; i++)
     {
@@ -100,20 +92,15 @@ void GenerateSyntheticLines(                                   //
       cv::Vec<double, 2> noisy_proj = proj;
       noisy_proj[0] += projection_noise(generator);
       noisy_proj[1] += projection_noise(generator);
-      sampled_noisy_projection.push_back(noisy_proj);
-      sampled_projection.push_back(proj);
-      sampled_line.push_back(Mw);
+      sampled_noisy_projection_pts.push_back(noisy_proj);
+      sampled_projection_pts.push_back(proj);
+      sampled_line_pts.push_back(Mw);
     }
     if (good_sample)
     {
-      points1.emplace_back(sampled_line[0][0], sampled_line[0][1], sampled_line[0][2]);
-      points2.emplace_back(sampled_line[1][0], sampled_line[1][1], sampled_line[1][2]);
-
-      projections1.emplace_back(sampled_projection[0][0], sampled_projection[0][1]);
-      projections2.emplace_back(sampled_projection[1][0], sampled_projection[1][1]);
-
-      noisy_projections1.emplace_back(sampled_noisy_projection[0][0], sampled_noisy_projection[0][1]);
-      noisy_projections2.emplace_back(sampled_noisy_projection[1][0], sampled_noisy_projection[1][1]);
+      lines.emplace_back(sampled_line_pts[0], sampled_line_pts[1]);
+      projections.emplace_back(sampled_projection_pts[0], sampled_projection_pts[1]);
+      noisy_projections.emplace_back(sampled_noisy_projection_pts[0], sampled_noisy_projection_pts[1]);
     }
     else
     {
@@ -152,14 +139,9 @@ int main()
   int n = 10;
   double std_pixels = sqrt(3);
 
-  std::vector<std::vector<Eigen::Vector<double, 3>>> vpoints1;
-  std::vector<std::vector<Eigen::Vector<double, 3>>> vpoints2;
-
-  std::vector<std::vector<Eigen::Vector<double, 2>>> vprojections1;
-  std::vector<std::vector<Eigen::Vector<double, 2>>> vprojections2;
-
-  std::vector<std::vector<Eigen::Vector<double, 2>>> vnoisy_projections1;
-  std::vector<std::vector<Eigen::Vector<double, 2>>> vnoisy_projections2;
+  std::vector<std::vector<sqpnl::Line>> vlines;
+  std::vector<std::vector<sqpnl::Projection>> vprojections;
+  std::vector<std::vector<sqpnl::Projection>> vnoisy_projections;
 
   std::vector<cv::Matx<double, 3, 3>> vRt;
   std::vector<cv::Vec<double, 3>> vtt;
@@ -168,25 +150,15 @@ int main()
   {
     cv::Matx<double, 3, 3> Rt;
     cv::Vec<double, 3> tt;
-    std::vector<Eigen::Vector<double, 3>> points1;
-    std::vector<Eigen::Vector<double, 3>> points2;
+    std::vector<sqpnl::Line> lines;
+    std::vector<sqpnl::Projection> projections;
+    std::vector<sqpnl::Projection> noisy_projections;
 
-    std::vector<Eigen::Vector<double, 2>> projections1;
-    std::vector<Eigen::Vector<double, 2>> projections2;
+    GenerateSyntheticLines(n, Rt, tt, lines, projections, noisy_projections, std_pixels);
 
-    std::vector<Eigen::Vector<double, 2>> noisy_projections1;
-    std::vector<Eigen::Vector<double, 2>> noisy_projections2;
-
-    GenerateSyntheticLines(n, Rt, tt, points1, points2, projections1, projections2, noisy_projections1, noisy_projections2, std_pixels);
-
-    vpoints1.push_back(points1);
-    vpoints2.push_back(points2);
-
-    vprojections1.push_back(projections1);
-    vprojections2.push_back(projections2);
-
-    vnoisy_projections1.push_back(noisy_projections1);
-    vnoisy_projections2.push_back(noisy_projections2);
+    vlines.push_back(lines);
+    vprojections.push_back(projections);
+    vnoisy_projections.push_back(noisy_projections);
 
     vRt.push_back(Rt);
     vtt.push_back(tt);
@@ -198,18 +170,16 @@ int main()
   params.enable_cheirality_check = true;
   params.omega_nullspace_method = sqp_engine::OmegaNullspaceMethod::RRQR;
   std::vector<double> weights(n, 1.0);
+  std::vector<Eigen::Vector<double, 3>> cheirality_points;
   double max_sq_error = 0, max_sq_proj_error = 0;
   std::vector<sqp_engine::SQPSolution> solutions;
   for (int i = 0; i < N; i++)
   {
     // example passing weights and parameters to the solver
-    sqpnl::PnLSolver solver(vpoints1[i], vpoints2[i], vnoisy_projections1[i], vnoisy_projections2[i], weights, params);
-    std::cout << "Solver created!\n";
+    sqpnl::PnLSolver solver(vlines[i], vnoisy_projections[i], cheirality_points, weights, params);
     if (solver.IsValid())
     {
-      std::cout << "Solving...\n";
       solver.Solve();
-      std::cout << "Solving Done.\n";
 
       if (solver.SolutionPtr(0))
       {
