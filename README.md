@@ -4,13 +4,9 @@ C++ Implementation of the SQPnL algorithm.
 The algorithm is the generic Perspective-n-Line (PnL) solver described in the paper ["Fast and Consistently Accurate Perspective-n-Line Pose Estimation"](https://www.researchgate.net/publication/383692992_Fast_and_Consistently_Accurate_Perspective-n-Line_Pose_Estimation). Supplementary material [here](https://www.researchgate.net/publication/383693236_Supplementary_material_for_the_SQPnL_paper).
 
 ## Required libraries
-SQPnP requires the [Eigen](http://eigen.tuxfamily.org/index.php?title=Main_Page) library to build. Besides [rank revealing](https://nhigham.com/2021/05/19/what-is-a-rank-revealing-factorization/) QR and optionally SVD, the use of Eigen is confined to matrix addition, transposition and multiplication.
-Choosing Eigen was motivated by its increasing popularity and lightweight character. There are also three examples of using the solver in this repository:
-1. ) one that uses OpenCV, just for the sake of demonstrating the initialization of SQPnP with ``cv::Point_<>`` and ``cv::Point3_<>`` structures,
-2. ) another in which data points are copied from plain 2D arrays, and
-3. ) a third which demonstrates SQPnP within RANSAC.
-
-Build will proceed with either one of 1) or 2), depending on whether OpenCV is found or not.
+SQPnL requires the [Eigen](http://eigen.tuxfamily.org/index.php?title=Main_Page) library to build. Besides [rank revealing](https://nhigham.com/2021/05/19/what-is-a-rank-revealing-factorization/) QR and optionally SVD, the use of Eigen is confined to matrix addition, transposition and multiplication.
+Choosing Eigen was motivated by its increasing popularity and lightweight character. There are also two examples of using the solver in this repository.
+The first example requires OpenCV while the second uses standard arrays only. Build will proceed with either one of 1) or 2), depending on whether OpenCV is found or not.
 
 ## Build
 -----
