@@ -47,7 +47,7 @@ For instance, to use SVD instead of the default RRQR for the nullspace basis of 
   sqp_engine::SolverParameters params;
   params.omega_nullspace_method = sqp_engine::OmegaNullspaceMethod::SVD;
   sqp_engine::PnLSolver solver(points1, points2, projections1, projections2, std::vector<Eigen::Vector<double, 3>(), std::vector<double>(n, 1.0), params);
-  // sqp_engine::PnLSolver solver(lines, projections, std::vector<Eigen::Vector<double, 3>(), std::vector<double>(n, 1.0), params);
+  // sqp_engine::PnLSolver solver(lines, projections, std::vector<Eigen::Vector<double, 3>>(), std::vector<double>(n, 1.0), params);
 ```
 Similarly, to use SVD in place of [FOAM](https://www.researchgate.net/publication/316445722_An_efficient_solution_to_absolute_orientation) for the nearest rotation matrix computations, use
 ```c++
