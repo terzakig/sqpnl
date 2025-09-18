@@ -62,7 +62,11 @@ int main()
   std::vector<sqpnl::Line> lines;
   std::vector<sqpnl::Projection> line_projections;
 
-  for (int i = 0; i < num_points / 2; i++)
+  const int nlines = num_points / 2;
+  lines.reserve(nlines);
+  line_projections.reserve(nlines);
+
+  for (int i = 0; i < nlines; i++)
   {
     const Eigen::Vector<double, 3> M1(pts3[2 * i][0], pts3[2 * i][1], pts3[2 * i][2]);
     const Eigen::Vector<double, 3> M2(pts3[2 * i + 1][0], pts3[2 * i + 1][1], pts3[2 * i + 1][2]);
@@ -72,6 +76,12 @@ int main()
 
     lines.emplace_back(M1, M2);
     line_projections.emplace_back(p1, p2);
+
+    /*
+    // alternative using points and directions:
+    lines.emplace_back(sqpnl::Line::FromPointAndDirection(M1, M2-M1));
+    line_projections.emplace_back(sqpnl::Projection::FromPointAndDirection(p1, p2-p1));
+    */
   }
 
   auto start = std::chrono::high_resolution_clock::now();
@@ -84,7 +94,7 @@ int main()
       lines,                                    //
       line_projections,                         //
       std::vector<Eigen::Vector<double, 3>>(),  //
-      std::vector<double>(num_points / 2, 1.0), //
+      std::vector<double>(nlines, 1.0), //
       params);
 
   auto stop = std::chrono::high_resolution_clock::now();

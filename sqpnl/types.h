@@ -53,6 +53,17 @@ namespace sqpnl
       P_hat = _P1 - _P1.dot(u) * u;
     }
 
+    //! Build from arbitrary point and direction ('factory' method)
+    inline static Line FromPointAndDirection(const Eigen::Vector<double, 3> &_P, const Eigen::Vector<double, 3> &_u)
+    {
+      Line line;
+
+      line.u = _u.normalized();
+      line.P_hat = _P - _P.dot(line.u) * line.u;
+
+      return line;
+    }
+
 #ifdef HAVE_OPENCV
     //! Construct from two points stored in OpenCV types
     inline Line(const cv::Vec<double, 3> &_P1, const cv::Vec<double, 3> &_P2)
@@ -63,16 +74,30 @@ namespace sqpnl
       u = (P2 - P1).normalized();
       P_hat = P1 - P1.dot(u) * u;
     }
-#endif
-    //! Find the 3D point on the line that projects to the nearest point to the center of the image (such that it lies in front)
-    inline static Eigen::Vector<double, 3> PointInFrontOfCamera(Line *line)
+
+    //! Build from arbitrary point and direction stored in OpenCV types
+    inline static Line FromPointAndDirection(const cv::Vec<double, 3> &_P, const cv::Vec<double, 3> &_u)
     {
-      const double &X = line->P_hat[0];
-      const double &Y = line->P_hat[1];
-      const double &Z = line->P_hat[2];
-      const double &u1 = line->u[0];
-      const double &u2 = line->u[1];
-      const double &u3 = line->u[2];
+      Line line;
+      const Eigen::Vector<double, 3> P = Eigen::Vector<double, 3>(_P[0], _P[1], _P[2]);
+
+      line.u = Eigen::Vector<double, 3>(_u[0], _u[1], _u[2]).normalized();
+      line.P_hat = P - P.dot(line.u) * line.u;
+
+      return line;
+    }
+
+#endif
+
+    //! Find the 3D point on the line that projects to the nearest point to the center of the image (such that it lies in front)
+    inline static Eigen::Vector<double, 3> PointInFrontOfCamera(const Line *line)
+    {
+      const double X = line->P_hat[0];
+      const double Y = line->P_hat[1];
+      const double Z = line->P_hat[2];
+      const double u1 = line->u[0];
+      const double u2 = line->u[1];
+      const double u3 = line->u[2];
 
       //@NOTE: This should not be zero under normal circumstances ( Z > 1 and u1 and u2 cannot be zero at the same time).
       double lambda0 = (u3 * X * X - Z * u1 * X + u3 * Y * Y - Z * u2 * Y) / (Z * u1 * u1 - X * u3 * u1 + Z * u2 * u2 - Y * u3 * u2);
@@ -94,7 +119,7 @@ namespace sqpnl
     //! Hesse normal
     Eigen::Matrix<double, 2, 1> n;
 
-    //! Defaurt constructor
+    //! Default constructor
     inline Projection() : Line(), n(Eigen::Vector<double, 2>::Zero()), c(0)
     {
     }
@@ -111,7 +136,7 @@ namespace sqpnl
       c = (abs(n[0]) > abs(n[1])) ? -P_hat[0] / n[0] : -P_hat[1] / n[1];
     }
 
-    //! Construct a project from a line
+    //! Construct a projection from a line
     inline Projection(const Line &line)
     {
       const double D = line.P_hat[2] * line.P_hat[2] + line.u[2] * line.u[2];
@@ -145,6 +170,16 @@ namespace sqpnl
       u[2] = 0;
     }
 
+    //! Build projection from 2D point and direction vectors ('factory' method)
+    inline static Projection FromPointAndDirection(const Eigen::Vector<double, 2>& m, const Eigen::Vector<double, 2>& d)
+    {
+      Eigen::Vector<double, 2> n(-d[1], d[0]);
+      n.normalize();
+      double c = -n.dot(m);
+
+      return Projection(c, n);
+    }
+
 #ifdef HAVE_OPENCV
     //! Construct from points on the Euclidean proj. plane at Z=1 with OpenCV types
     inline Projection(const cv::Vec<double, 2> &_p1, const cv::Vec<double, 2> &_p2) :                                                  //
@@ -158,7 +193,7 @@ namespace sqpnl
       c = (abs(n[0]) > abs(n[1])) ? -P_hat[0] / n[0] : -P_hat[1] / n[1];
     }
 
-    //! Construct projection from Hesse coordinates (line equation as constant and 2D normal vector) in OpenCV vector
+    //! Construct projection from Hesse coordinates (line equation as constant and 2D normal vector) in OpenCV vectors
     inline Projection(const double &_c, const cv::Vec<double, 2> &_n) : c(_c), n(Eigen::Vector<double, 2>(_n[0], _n[1]))
     {
       P_hat[0] = -c * n[0];
@@ -167,6 +202,16 @@ namespace sqpnl
       u[0] = -n[1];
       u[1] = n[0];
       u[2] = 0;
+    }
+
+    //! Build projection from 2D point and direction in OpenCV vectors
+    inline static Projection FromPointAndDirection(const cv::Vec<double, 2>& m, const cv::Vec<double, 2>& d)
+    {
+      Eigen::Vector<double, 2> n(-d[1], d[0]);
+      n.normalize();
+      double c = -n.dot(Eigen::Vector<double, 2>(m[0], m[1]));
+
+      return Projection(c, n);
     }
 #endif
   };
