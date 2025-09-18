@@ -68,6 +68,7 @@ namespace sqpnl
       if (n != points2.size() || n != projections1.size() || n != projections2.size() || n < 3)
       {
         flag_valid_ = false;
+        std::cerr << "SQPnL: Mismatching data vector sizes!\n" << std::flush;
         return;
       }
 
@@ -76,6 +77,7 @@ namespace sqpnl
         if (n != weights.size())
         {
           flag_valid_ = false;
+          std::cerr << "SQPnL: Invalid weights vector size!\n" << std::flush;
           return;
         }
         weights_ = weights;
@@ -137,6 +139,7 @@ namespace sqpnl
       if (n != projections.size() || n < 3)
       {
         flag_valid_ = false;
+        std::cerr << "SQPnL: Mismatching data vector sizes!\n" << std::flush;
         return;
       }
 
@@ -145,6 +148,7 @@ namespace sqpnl
         if (n != weights.size())
         {
           flag_valid_ = false;
+          std::cerr << "SQPnL: Invalid weights vector size!\n" << std::flush;
           return;
         }
         weights_ = weights;

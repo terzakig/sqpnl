@@ -165,7 +165,6 @@ namespace sqpnl
     sum_BBt(2, 2) += w * BBt(2, 2);
 
     // Sum(wi*Bi*Bi'*Mi) where the matrix Mi is such that. Mi*r = R'*Pi (Pi is the line's Pi_hat)
-    const double norm_P_hat = line.P_hat.norm();
     const double X = line.P_hat[0] + 0.5 * line.u[0];
     const double Y = line.P_hat[1] + 0.5 * line.u[1];
     const double Z = line.P_hat[2] + 0.5 * line.u[2];
@@ -391,7 +390,7 @@ namespace sqpnl
     }
 
     // Transpose rotations in solutions
-    for (size_t i = 0; i < num_solutions_; i++)
+    for (int i = 0; i < num_solutions_; i++)
     {
       solutions_[i].r = sqp_engine::TransposeRotationVector(solutions_[i].r);
       solutions_[i].r_hat = sqp_engine::TransposeRotationVector(solutions_[i].r_hat);

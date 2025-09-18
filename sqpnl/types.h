@@ -120,7 +120,7 @@ namespace sqpnl
     Eigen::Matrix<double, 2, 1> n;
 
     //! Default constructor
-    inline Projection() : Line(), n(Eigen::Vector<double, 2>::Zero()), c(0)
+    inline Projection() : Line(), c(0.), n(Eigen::Vector<double, 2>::Zero())
     {
     }
 
