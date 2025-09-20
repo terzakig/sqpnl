@@ -38,12 +38,12 @@ To run the PnL example(s), once in the ``build`` directory,
 See ``struct SolverParameters`` in ``SQPEngine/sqp_engin/sqp_engine.h`` which contains SQPnL's parameters that can be specified by the caller.
 For instance, to use SVD instead of the default RRQR for the nullspace basis of Omega, the following fragment can be used:
 ```c++
-  // call solver with user-specified parameters (and equal weights for all lines). Note that lines and parojections can be defined by pairs of points (points1-points2 and projections1-projections2)
+  // call solver with user-specified parameters (and equal weights for all lines). Note that lines and projections can be defined by pairs of points (points1-points2 and projections1-projections2)
   //  or with vectors of sqpnl::Line and sqpnl::Projection objects. 
   sqp_engine::SolverParameters params;
   params.omega_nullspace_method = sqp_engine::OmegaNullspaceMethod::SVD;
-  sqp_engine::PnLSolver solver(points1, points2, projections1, projections2, std::vector<Eigen::Vector<double, 3>(), std::vector<double>(n, 1.0), params);
-  // sqp_engine::PnLSolver solver(lines, projections, std::vector<Eigen::Vector<double, 3>>(), std::vector<double>(n, 1.0), params);
+  sqp_engine::PnLSolver solver(points1, points2, projections1, projections2, std::vector<Eigen::Vector3d>(), std::vector<double>(n, 1.0), params);
+  // sqp_engine::PnLSolver solver(lines, projections, std::vector<Eigen::Vector3d>(), std::vector<double>(n, 1.0), params);
 ```
 Similarly, to use SVD in place of [FOAM](https://www.researchgate.net/publication/316445722_An_efficient_solution_to_absolute_orientation) for the nearest rotation matrix computations, use
 ```c++

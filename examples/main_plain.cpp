@@ -68,11 +68,11 @@ int main()
 
   for (int i = 0; i < nlines; i++)
   {
-    const Eigen::Vector<double, 3> M1(pts3[2 * i][0], pts3[2 * i][1], pts3[2 * i][2]);
-    const Eigen::Vector<double, 3> M2(pts3[2 * i + 1][0], pts3[2 * i + 1][1], pts3[2 * i + 1][2]);
+    const Eigen::Vector3d M1(pts3[2 * i][0], pts3[2 * i][1], pts3[2 * i][2]);
+    const Eigen::Vector3d M2(pts3[2 * i + 1][0], pts3[2 * i + 1][1], pts3[2 * i + 1][2]);
 
-    const Eigen::Vector<double, 2> p1(pts2[2 * i][0], pts2[2 * i][1]);
-    const Eigen::Vector<double, 2> p2(pts2[2 * i + 1][0], pts2[2 * i + 1][1]);
+    const Eigen::Vector2d p1(pts2[2 * i][0], pts2[2 * i][1]);
+    const Eigen::Vector2d p2(pts2[2 * i + 1][0], pts2[2 * i + 1][1]);
 
     lines.emplace_back(M1, M2);
     line_projections.emplace_back(p1, p2);
@@ -93,7 +93,7 @@ int main()
   sqpnl::PnLSolver solver(                      //
       lines,                                    //
       line_projections,                         //
-      std::vector<Eigen::Vector<double, 3>>(),  //
+      std::vector<Eigen::Vector3d>(),  //
       std::vector<double>(nlines, 1.0), //
       params);
 

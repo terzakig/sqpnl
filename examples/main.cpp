@@ -170,7 +170,7 @@ int main()
   params.enable_cheirality_check = true;
   params.omega_nullspace_method = sqp_engine::OmegaNullspaceMethod::RRQR;
   std::vector<double> weights(n, 1.0);
-  std::vector<Eigen::Vector<double, 3>> cheirality_points;
+  std::vector<Eigen::Vector3d> cheirality_points;
   double max_sq_error = 0, max_sq_proj_error = 0;
   std::vector<sqp_engine::SQPSolution> solutions;
   for (int i = 0; i < N; i++)

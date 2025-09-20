@@ -121,6 +121,7 @@ namespace sqpnl
         // Populate Omega, Sum(B*B'), Sum(B*B'*M), sum_w, cheir_points_mean
         AccumulateDataMatrices(w, lines_[i], projections_[i], cheir_points_[i], sum_w, cheir_points_mean_, sum_BBt, sum_BBtM, sum_M);
       }
+
       // Finalize data matrices (fill lower triangles, etc.)
       FinalizeDataMatrices(sum_w, sum_BBt, sum_BBtM, sum_M);
     }
@@ -200,6 +201,7 @@ namespace sqpnl
         AccumulateDataMatrices(w, lines_[i], projections_[i], cheir_points_[i], sum_w, cheir_points_mean_, sum_BBt, sum_BBtM, sum_M);
       }
 
+      // Finalize data matrices (fill lower triangles, etc.)
       FinalizeDataMatrices(sum_w, sum_BBt, sum_BBtM, sum_M);
     }
 
