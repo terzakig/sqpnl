@@ -101,7 +101,7 @@ namespace sqpnl
       Eigen::Matrix<double, 3, 9> sum_BBtM = Eigen::Matrix<double, 3, 9>::Zero();
       Eigen::Matrix<double, 3, 9> sum_M = Eigen::Matrix<double, 3, 9>::Zero();
 
-      cheir_points_mean_ = Eigen::Vector<double, 3>::Zero();
+      cheir_points_mean_ = Eigen::Vector3d::Zero();
       cheir_points_.resize(projections_.size());
 
       // Go through the lines and projections now...
@@ -172,7 +172,7 @@ namespace sqpnl
       Eigen::Matrix<double, 3, 9> sum_BBtM = Eigen::Matrix<double, 3, 9>::Zero();
       Eigen::Matrix<double, 3, 9> sum_M = Eigen::Matrix<double, 3, 9>::Zero();
 
-      cheir_points_mean_ = Eigen::Vector<double, 3>::Zero();
+      cheir_points_mean_ = Eigen::Vector3d::Zero();
       cheir_points_.resize(projections_.size());
 
       // Go through the lines and projections now...
@@ -210,9 +210,9 @@ namespace sqpnl
     std::vector<Projection> projections_;
     std::vector<Line> lines_;
     //! The cheirality points. Either computed from the lines or provided as a constructor argument.
-    std::vector<Eigen::Vector<double, 3>> cheir_points_;
+    std::vector<Eigen::Vector3d> cheir_points_;
     //! The average of the points on the lines that
-    Eigen::Vector<double, 3> cheir_points_mean_;
+    Eigen::Vector3d cheir_points_mean_;
     std::vector<double> weights_;
     sqp_engine::SolverParameters parameters_;
 
@@ -233,15 +233,15 @@ namespace sqpnl
     std::function<void(const Eigen::Matrix<double, 9, 1> &, Eigen::Matrix<double, 9, 1> &)> NearestRotationMatrix;
 
     //! Populate data matrices Omega and P in a single iteration
-    void AccumulateDataMatrices(                     //
-        const double &w,                             //
-        const Line &line,                            //
-        const Projection &projection,                //
-        const Eigen::Vector<double, 3> &cheir_point, //
-        double &sum_w,                               //
-        Eigen::Vector<double, 3> &cheir_points_mean, //
-        Eigen::Matrix<double, 3, 3> &sum_BBt,        //
-        Eigen::Matrix<double, 3, 9> &sum_BBtM,       //
+    void AccumulateDataMatrices(               //
+        const double &w,                       //
+        const Line &line,                      //
+        const Projection &projection,          //
+        const Eigen::Vector3d &cheir_point,    //
+        double &sum_w,                         //
+        Eigen::Vector3d &cheir_points_mean,    //
+        Eigen::Matrix<double, 3, 3> &sum_BBt,  //
+        Eigen::Matrix<double, 3, 9> &sum_BBtM, //
         Eigen::Matrix<double, 3, 9> &sum_M);
 
     //! Finalize the computations for Omega and P (used to recover translation from rotation)

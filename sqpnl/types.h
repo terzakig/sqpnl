@@ -24,12 +24,6 @@
 
 #include "sqp_engine/sqp_engine.h"
 
-namespace Eigen
-{
-  template <typename P, int n>
-  using Vector = Matrix<P, n, 1>;
-}
-
 namespace sqpnl
 {
 
@@ -37,24 +31,24 @@ namespace sqpnl
   struct Line
   {
     //! Nearest point to the origin
-    Eigen::Matrix<double, 3, 1> P_hat;
+    Eigen::Vector3d P_hat;
     //! Line direction
-    Eigen::Matrix<double, 3, 1> u;
+    Eigen::Vector3d u;
 
     //! Empty line
-    inline Line() : P_hat(Eigen::Vector<double, 3>::Zero()), u(Eigen::Vector<double, 3>::Zero())
+    inline Line() : P_hat(Eigen::Vector3d::Zero()), u(Eigen::Vector3d::Zero())
     {
     }
 
     //! Construct from two points
-    inline Line(const Eigen::Vector<double, 3> &_P1, const Eigen::Vector<double, 3> &_P2)
+    inline Line(const Eigen::Vector3d &_P1, const Eigen::Vector3d &_P2)
     {
       u = (_P2 - _P1).normalized();
       P_hat = _P1 - _P1.dot(u) * u;
     }
 
     //! Build from arbitrary point and direction ('factory' method)
-    inline static Line FromPointAndDirection(const Eigen::Vector<double, 3> &_P, const Eigen::Vector<double, 3> &_u)
+    inline static Line FromPointAndDirection(const Eigen::Vector3d &_P, const Eigen::Vector3d &_u)
     {
       Line line;
 
@@ -68,8 +62,8 @@ namespace sqpnl
     //! Construct from two points stored in OpenCV types
     inline Line(const cv::Vec<double, 3> &_P1, const cv::Vec<double, 3> &_P2)
     {
-      const Eigen::Vector<double, 3> P2 = Eigen::Vector<double, 3>(_P2[0], _P2[1], _P2[2]);
-      const Eigen::Vector<double, 3> P1 = Eigen::Vector<double, 3>(_P1[0], _P1[1], _P1[2]);
+      const Eigen::Vector3d P2 = Eigen::Vector3d(_P2[0], _P2[1], _P2[2]);
+      const Eigen::Vector3d P1 = Eigen::Vector3d(_P1[0], _P1[1], _P1[2]);
 
       u = (P2 - P1).normalized();
       P_hat = P1 - P1.dot(u) * u;
@@ -79,9 +73,9 @@ namespace sqpnl
     inline static Line FromPointAndDirection(const cv::Vec<double, 3> &_P, const cv::Vec<double, 3> &_u)
     {
       Line line;
-      const Eigen::Vector<double, 3> P = Eigen::Vector<double, 3>(_P[0], _P[1], _P[2]);
+      const Eigen::Vector3d P = Eigen::Vector3d(_P[0], _P[1], _P[2]);
 
-      line.u = Eigen::Vector<double, 3>(_u[0], _u[1], _u[2]).normalized();
+      line.u = Eigen::Vector3d(_u[0], _u[1], _u[2]).normalized();
       line.P_hat = P - P.dot(line.u) * line.u;
 
       return line;
@@ -90,7 +84,7 @@ namespace sqpnl
 #endif
 
     //! Find the 3D point on the line that projects to the nearest point to the center of the image (such that it lies in front)
-    inline static Eigen::Vector<double, 3> PointInFrontOfCamera(const Line *line)
+    inline static Eigen::Vector3d PointInFrontOfCamera(const Line *line)
     {
       const double X = line->P_hat[0];
       const double Y = line->P_hat[1];
@@ -117,18 +111,18 @@ namespace sqpnl
     //! Hesse constant
     double c;
     //! Hesse normal
-    Eigen::Matrix<double, 2, 1> n;
+    Eigen::Vector2d n;
 
     //! Default constructor
-    inline Projection() : Line(), c(0.), n(Eigen::Vector<double, 2>::Zero())
+    inline Projection() : Line(), c(0.), n(Eigen::Vector2d::Zero())
     {
     }
 
     //! Construct from points on the Euclidean proj. plane at Z=1
-    inline Projection(const Eigen::Vector<double, 2> &_p1, const Eigen::Vector<double, 2> &_p2) :                                                  //
-                                                                                                  Line(                                            //
-                                                                                                      Eigen::Vector<double, 3>(_p1[0], _p1[1], 1), //
-                                                                                                      Eigen::Vector<double, 3>(_p2[0], _p2[1], 1))
+    inline Projection(const Eigen::Vector2d &_p1, const Eigen::Vector2d &_p2) :                                         //
+                                                                                Line(                                   //
+                                                                                    Eigen::Vector3d(_p1[0], _p1[1], 1), //
+                                                                                    Eigen::Vector3d(_p2[0], _p2[1], 1))
     {
       n[0] = -u[1];
       n[1] = u[0];
@@ -160,7 +154,7 @@ namespace sqpnl
     }
 
     //! Construct projection from Hesse coordinates (line equation as constant and 2D normal vector)
-    inline Projection(const double &_c, const Eigen::Vector<double, 2> &_n) : c(_c), n(_n)
+    inline Projection(const double &_c, const Eigen::Vector2d &_n) : c(_c), n(_n)
     {
       P_hat[0] = -c * n[0];
       P_hat[1] = -c * n[1];
@@ -171,9 +165,9 @@ namespace sqpnl
     }
 
     //! Build projection from 2D point and direction vectors ('factory' method)
-    inline static Projection FromPointAndDirection(const Eigen::Vector<double, 2>& m, const Eigen::Vector<double, 2>& d)
+    inline static Projection FromPointAndDirection(const Eigen::Vector2d& m, const Eigen::Vector2d& d)
     {
-      Eigen::Vector<double, 2> n(-d[1], d[0]);
+      Eigen::Vector2d n(-d[1], d[0]);
       n.normalize();
       double c = -n.dot(m);
 
@@ -182,10 +176,10 @@ namespace sqpnl
 
 #ifdef HAVE_OPENCV
     //! Construct from points on the Euclidean proj. plane at Z=1 with OpenCV types
-    inline Projection(const cv::Vec<double, 2> &_p1, const cv::Vec<double, 2> &_p2) :                                                  //
-                                                                                      Line(                                            //
-                                                                                          Eigen::Vector<double, 3>(_p1[0], _p1[1], 1), //
-                                                                                          Eigen::Vector<double, 3>(_p2[0], _p2[1], 1))
+    inline Projection(const cv::Vec<double, 2> &_p1, const cv::Vec<double, 2> &_p2) :                                         //
+                                                                                      Line(                                   //
+                                                                                          Eigen::Vector3d(_p1[0], _p1[1], 1), //
+                                                                                          Eigen::Vector3d(_p2[0], _p2[1], 1))
     {
       n[0] = -u[1];
       n[1] = u[0];
@@ -194,7 +188,7 @@ namespace sqpnl
     }
 
     //! Construct projection from Hesse coordinates (line equation as constant and 2D normal vector) in OpenCV vectors
-    inline Projection(const double &_c, const cv::Vec<double, 2> &_n) : c(_c), n(Eigen::Vector<double, 2>(_n[0], _n[1]))
+    inline Projection(const double &_c, const cv::Vec<double, 2> &_n) : c(_c), n(Eigen::Vector2d(_n[0], _n[1]))
     {
       P_hat[0] = -c * n[0];
       P_hat[1] = -c * n[1];
@@ -207,9 +201,9 @@ namespace sqpnl
     //! Build projection from 2D point and direction in OpenCV vectors
     inline static Projection FromPointAndDirection(const cv::Vec<double, 2>& m, const cv::Vec<double, 2>& d)
     {
-      Eigen::Vector<double, 2> n(-d[1], d[0]);
+      Eigen::Vector2d n(-d[1], d[0]);
       n.normalize();
-      double c = -n.dot(Eigen::Vector<double, 2>(m[0], m[1]));
+      double c = -n.dot(Eigen::Vector2d(m[0], m[1]));
 
       return Projection(c, n);
     }

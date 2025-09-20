@@ -23,9 +23,9 @@ namespace sqpnl
       const double &w,                             //
       const Line &line,                            //
       const Projection &projection,                //
-      const Eigen::Vector<double, 3> &cheir_point, //
+      const Eigen::Vector3d &cheir_point,          //
       double &sum_w,                               //
-      Eigen::Vector<double, 3> &cheir_points_mean, //
+      Eigen::Vector3d &cheir_points_mean,          //
       Eigen::Matrix<double, 3, 3> &sum_BBt,        //
       Eigen::Matrix<double, 3, 9> &sum_BBtM,       //
       Eigen::Matrix<double, 3, 9> &sum_M)
@@ -41,7 +41,7 @@ namespace sqpnl
         u2u3 = line.u[1] * line.u[2],          //
         squ3 = line.u[2] * line.u[2];
 
-    const Eigen::Vector<double, 3> v = (projection.u.cross(projection.P_hat)).normalized();
+    const Eigen::Vector3d v = (projection.u.cross(projection.P_hat)).normalized();
     const double sqv1 = v[0] * v[0], //
         v1v2 = v[0] * v[1],          //
         v1v3 = v[0] * v[2],          //
