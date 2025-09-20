@@ -188,7 +188,7 @@ namespace sqpnl
         }
         else
         {
-          cheir_points_.emplace_back(cheir_points_[i][0], cheir_points_[i][1], cheir_points_[i][2]);
+          cheir_points_.emplace_back(cheir_points[i][0], cheir_points[i][1], cheir_points[i][2]);
         }
 
         if (abs(w) < 1e-6)
