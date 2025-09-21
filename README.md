@@ -3,10 +3,12 @@ C++ Implementation of the SQPnL algorithm.
 
 The algorithm is the generic Perspective-n-Line (PnL) solver described in the paper ["Fast and Consistently Accurate Perspective-n-Line Pose Estimation"](https://www.researchgate.net/publication/383692992_Fast_and_Consistently_Accurate_Perspective-n-Line_Pose_Estimation). Supplementary material [here](https://www.researchgate.net/publication/383693236_Supplementary_material_for_the_SQPnL_paper).
 
+For a similar PnP solver, see [SQPnP](https://github.com/terzakig/sqpnp).
+
 ## Required libraries
 SQPnL requires the [Eigen](http://eigen.tuxfamily.org/index.php?title=Main_Page) library to build. Besides [rank revealing](https://nhigham.com/2021/05/19/what-is-a-rank-revealing-factorization/) QR and optionally SVD, the use of Eigen is confined to matrix addition, transposition and multiplication.
 Choosing Eigen was motivated by its increasing popularity and lightweight character. There are also two examples of using the solver in this repository.
-The first example requires OpenCV while the second uses standard arrays only. Build will proceed with either one of 1) or 2), depending on whether OpenCV is found or not.
+The first example requires OpenCV while the second uses plain C-style arrays only. Build will proceed with one of the examples, depending on whether OpenCV is found or not.
 
 ## Build
 -----
@@ -38,7 +40,8 @@ To run the PnL example(s), once in the ``build`` directory,
 See ``struct SolverParameters`` in ``SQPEngine/sqp_engin/sqp_engine.h`` which contains SQPnL's parameters that can be specified by the caller.
 For instance, to use SVD instead of the default RRQR for the nullspace basis of Omega, the following fragment can be used:
 ```c++
-  // call solver with user-specified parameters (and equal weights for all lines). Note that lines and projections can be defined by pairs of points (points1-points2 and projections1-projections2)
+  // call solver with user-specified parameters (and equal weights for all lines).
+  // Note that lines and projections can be defined by pairs of points (points1-points2 and projections1-projections2)
   //  or with vectors of sqpnl::Line and sqpnl::Projection objects. 
   sqp_engine::SolverParameters params;
   params.omega_nullspace_method = sqp_engine::OmegaNullspaceMethod::SVD;
@@ -53,13 +56,13 @@ params.nearest_rotation_method = sqp_engine::NearestRotationMethod::SVD;
 ## Cite as
 If you use this code in your published work, please cite the following paper:<br><br>
 <pre>
-  @inproceedings{terzakis2025fast,
+  @inproceedings{terzakis2024fast,
   title={Fast and Consistently Accurate Perspective-n-Line Pose Estimation},
   author={Terzakis, George and Lourakis, Manolis},
   booktitle={International Conference on Pattern Recognition},
   pages={97--112},
-  year={2025},
-  organization={Springer}
+  year={2024},
+  publisher={Springer-Verlag},
+  url={https://doi.org/10.1007/978-3-031-78456-9_7}
 }
 </pre>
-
