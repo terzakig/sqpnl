@@ -102,7 +102,7 @@ namespace sqpnl
       Eigen::Matrix<double, 3, 9> sum_M = Eigen::Matrix<double, 3, 9>::Zero();
 
       cheir_points_mean_ = Eigen::Vector3d::Zero();
-      cheir_points_.resize(projections_.size());
+      cheir_points_.reserve(n);
 
       // Go through the lines and projections now...
       for (size_t i = 0; i < n; i++)
@@ -174,7 +174,7 @@ namespace sqpnl
       Eigen::Matrix<double, 3, 9> sum_M = Eigen::Matrix<double, 3, 9>::Zero();
 
       cheir_points_mean_ = Eigen::Vector3d::Zero();
-      cheir_points_.resize(projections_.size());
+      cheir_points_.reserve(n);
 
       // Go through the lines and projections now...
       for (size_t i = 0; i < n; i++)
