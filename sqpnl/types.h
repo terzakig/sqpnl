@@ -134,6 +134,7 @@ namespace sqpnl
     inline Projection(const Line &line)
     {
       const double D = line.P_hat[2] * line.P_hat[2] + line.u[2] * line.u[2];
+
       if (D < 1e-10)
       {
         P_hat = line.P_hat;
@@ -144,8 +145,8 @@ namespace sqpnl
       {
         const double iD = 1.0 / D;
         const double isqrtD = sqrt(iD);
-        P_hat = iD * (P_hat[2] * P_hat + u[2] * u);
-        u = isqrtD * (-u[2] * P_hat + P_hat[2] * u);
+        P_hat = iD * (line.P_hat[2] * line.P_hat + line.u[2] * line.u);
+        u = isqrtD * (-line.u[2] * line.P_hat + line.P_hat[2] * line.u);
       }
       n[0] = -u[1];
       n[1] = u[0];
