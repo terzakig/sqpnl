@@ -166,9 +166,9 @@ int main()
 
   auto start = std::chrono::steady_clock::now();
 
-  sqp_engine::SolverParameters params;
-  params.enable_cheirality_check = true;
-  params.omega_nullspace_method = sqp_engine::OmegaNullspaceMethod::RRQR;
+  sqp_engine::SolverParameters engine_params;
+  engine_params.enable_cheirality_check = true;
+  engine_params.omega_nullspace_method = sqp_engine::OmegaNullspaceMethod::RRQR;
   std::vector<double> weights(n, 1.0);
   std::vector<Eigen::Vector3d> cheirality_points;
   double max_sq_error = 0, max_sq_proj_error = 0;
@@ -176,7 +176,7 @@ int main()
   for (int i = 0; i < N; i++)
   {
     // example passing weights and parameters to the solver
-    sqpnl::PnLSolver solver(vlines[i], vnoisy_projections[i], cheirality_points, weights, params);
+    sqpnl::PnLSolver solver(vlines[i], vnoisy_projections[i], cheirality_points, weights, engine_params);
     if (solver.IsValid())
     {
       solver.Solve();

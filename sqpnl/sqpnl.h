@@ -61,7 +61,8 @@ namespace sqpnl
         const std::vector<Point2D> &projections1,           //
         const std::vector<Point2D> &projections2,           //
         const std::vector<Pw> &weights = std::vector<Pw>(), //
-        const sqp_engine::SolverParameters &parameters = sqp_engine::SolverParameters()) : parameters_(parameters)
+        const sqp_engine::SolverParameters &engine_parameters = sqp_engine::SolverParameters(),
+        const Parameters &sqpnl_parameters = Parameters()) : engine_parameters_(engine_parameters), sqpnl_parameters_(sqpnl_parameters)
     {
       const size_t n = points1.size();
 
@@ -133,7 +134,8 @@ namespace sqpnl
         const std::vector<Projection> &projections,                                                  //
         const std::vector<Eigen::Vector<Pp, 3>> &cheir_points = std::vector<Eigen::Vector<Pp, 3>>(), //
         const std::vector<Pw> &weights = std::vector<Pw>(),                                          //
-        const sqp_engine::SolverParameters &parameters = sqp_engine::SolverParameters()) : parameters_(parameters)
+        const sqp_engine::SolverParameters &engine_parameters = sqp_engine::SolverParameters(),
+        const Parameters &sqpnl_parameters = Parameters()) : engine_parameters_(engine_parameters), sqpnl_parameters_(sqpnl_parameters)
     {
       const size_t n = lines.size();
 
@@ -208,6 +210,9 @@ namespace sqpnl
     //! Solve the PnL
     bool Solve();
 
+    //! Solve for translation using Mirzaei & Roumeliotis LS formulation
+    Eigen::Vector3d MirzaeiTranslation(const Eigen::Matrix<double, 9, 1>& r_hat);
+
   private:
     std::vector<Projection> projections_;
     std::vector<Line> lines_;
@@ -216,7 +221,8 @@ namespace sqpnl
     //! The average of the points on the lines that
     Eigen::Vector3d cheir_points_mean_;
     std::vector<double> weights_;
-    sqp_engine::SolverParameters parameters_;
+    sqp_engine::SolverParameters engine_parameters_;
+    Parameters sqpnl_parameters_;
 
     Eigen::Matrix<double, 9, 9> Omega_;
 
@@ -307,6 +313,19 @@ namespace sqpnl
 
       return npos >= nneg;
     }
+
+    //
+    // Compute the translation with the method designated in sqpnl_parameters_
+    inline Eigen::Vector3d ComputeTranslation(const Eigen::Matrix<double, 3, 9>& P, const Eigen::Matrix<double, 9, 1>& r_hat)
+    {
+      switch(sqpnl_parameters_.translation_method)
+      {
+        case TranslationMethod::OWN: return P * r_hat;
+        case TranslationMethod::MIRZAEI: return MirzaeiTranslation(r_hat); // P unused here
+      }
+      return Eigen::Vector3d::Zero(); // just in case
+    }
+
   }; // class PnLSolver
 
 }

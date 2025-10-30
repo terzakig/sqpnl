@@ -16,7 +16,7 @@
 
 namespace sqpnl
 {
-
+  const TranslationMethod  Parameters::DEFAULT_TRANSLATION_METHOD = TranslationMethod::OWN;
   const double PnLSolver::SQRT3 = std::sqrt(3.0);
 
   void PnLSolver::AccumulateDataMatrices(          //
@@ -241,7 +241,7 @@ namespace sqpnl
     }
 
     // Finally, decompose Omega with the chosen method
-    if (parameters_.omega_nullspace_method == sqp_engine::OmegaNullspaceMethod::RRQR)
+    if (engine_parameters_.omega_nullspace_method == sqp_engine::OmegaNullspaceMethod::RRQR)
     {
       // Rank revealing QR nullspace computation with full pivoting.
       // This is slightly less accurate compared to SVD but x2 faster
@@ -251,7 +251,7 @@ namespace sqpnl
       Eigen::Matrix<double, 9, 9> R = rrqr.matrixQR().template triangularView<Eigen::Upper>();
       s_ = R.diagonal().array().abs();
     }
-    else if (parameters_.omega_nullspace_method == sqp_engine::OmegaNullspaceMethod::CPRRQR)
+    else if (engine_parameters_.omega_nullspace_method == sqp_engine::OmegaNullspaceMethod::CPRRQR)
     {
       // Rank revealing QR nullspace computation with column pivoting.
       // This is potentially less accurate compared to RRQR but faster
@@ -261,7 +261,7 @@ namespace sqpnl
       Eigen::Matrix<double, 9, 9> R = cprrqr.matrixR().template triangularView<Eigen::Upper>();
       s_ = R.diagonal().array().abs();
     }
-    else // if ( parameters_.omega_nullspace_method == sqp_engine::OmegaNullspaceMethod::SVD )
+    else // if ( engine_parameters_.omega_nullspace_method == sqp_engine::OmegaNullspaceMethod::SVD )
     {
       // SVD-based nullspace computation. This is the most accurate but slowest option
       Eigen::JacobiSVD<Eigen::Matrix<double, 9, 9>> svd(Omega_, Eigen::ComputeFullU);
@@ -270,7 +270,7 @@ namespace sqpnl
     }
 
     // Find dimension of null space; the check guards against overly large rank_tolerance
-    while (7 - num_null_vectors_ >= 0 && s_[7 - num_null_vectors_] < parameters_.rank_tolerance)
+    while (7 - num_null_vectors_ >= 0 && s_[7 - num_null_vectors_] < engine_parameters_.rank_tolerance)
     {
       num_null_vectors_++;
     }
@@ -281,17 +281,17 @@ namespace sqpnl
     }
 
     // Assign nearest rotation method
-    NearestRotationMatrix = parameters_.sqp_config.NearestRotationMatrix;
+    NearestRotationMatrix = engine_parameters_.sqp_config.NearestRotationMatrix;
   }
 
   void PnLSolver::HandleSolution(sqp_engine::SQPSolution &solution, double &min_sq_error)
   {
-    if (!parameters_.enable_cheirality_check ||                              //
+    if (!engine_parameters_.enable_cheirality_check ||                       //
         TestPositiveDepth(solution) || TestPositiveMajorityDepths(solution)) // check the majority if the check with a single points fails
     {
 
       solution.sq_error = (Omega_ * solution.r_hat).dot(solution.r_hat);
-      if (fabs(min_sq_error - solution.sq_error) > parameters_.equal_squared_errors_diff)
+      if (fabs(min_sq_error - solution.sq_error) > engine_parameters_.equal_squared_errors_diff)
       {
         if (min_sq_error > solution.sq_error)
         {
@@ -305,7 +305,7 @@ namespace sqpnl
         bool found = false;
         for (int i = 0; i < num_solutions_; i++)
         {
-          if ((solutions_[i].r_hat - solution.r_hat).squaredNorm() < parameters_.equal_vectors_squared_diff)
+          if ((solutions_[i].r_hat - solution.r_hat).squaredNorm() < engine_parameters_.equal_vectors_squared_diff)
           {
             if (solutions_[i].sq_error > solution.sq_error)
             {
@@ -348,10 +348,10 @@ namespace sqpnl
       sqp_engine::SQPSolution solution[2];
 
       // Avoid SQP if e is orthogonal
-      if (orthogonality_sq_error < parameters_.orthogonality_squared_error_threshold)
+      if (orthogonality_sq_error < engine_parameters_.orthogonality_squared_error_threshold)
       {
         solution[0].r_hat = sqp_engine::Determinant9x1(e) * e;
-        solution[0].t = P_ * solution[0].r_hat;
+        solution[0].t = ComputeTranslation(P_, solution[0].r_hat);
         solution[0].num_iterations = 0;
 
         HandleSolution(solution[0], min_sq_error);
@@ -359,13 +359,13 @@ namespace sqpnl
       else
       {
         NearestRotationMatrix(e, solution[0].r);
-        solution[0] = sqp_engine::RunSQP(Omega_, solution[0].r, parameters_.sqp_config);
-        solution[0].t = P_ * solution[0].r_hat;
+        solution[0] = sqp_engine::RunSQP(Omega_, solution[0].r, engine_parameters_.sqp_config);
+        solution[0].t = ComputeTranslation(P_, solution[0].r_hat);
         HandleSolution(solution[0], min_sq_error);
 
         NearestRotationMatrix(-e, solution[1].r);
-        solution[1] = sqp_engine::RunSQP(Omega_, solution[1].r, parameters_.sqp_config);
-        solution[1].t = P_ * solution[1].r_hat;
+        solution[1] = sqp_engine::RunSQP(Omega_, solution[1].r, engine_parameters_.sqp_config);
+        solution[1].t = ComputeTranslation(P_, solution[1].r_hat);
         HandleSolution(solution[1], min_sq_error);
       }
     }
@@ -377,13 +377,13 @@ namespace sqpnl
       sqp_engine::SQPSolution solution[2];
 
       NearestRotationMatrix(e, solution[0].r);
-      solution[0] = sqp_engine::RunSQP(Omega_, solution[0].r, parameters_.sqp_config);
-      solution[0].t = P_ * solution[0].r_hat;
+      solution[0] = sqp_engine::RunSQP(Omega_, solution[0].r, engine_parameters_.sqp_config);
+      solution[0].t = ComputeTranslation(P_, solution[0].r_hat);
       HandleSolution(solution[0], min_sq_error);
 
       NearestRotationMatrix(-e, solution[1].r);
-      solution[1] = sqp_engine::RunSQP(Omega_, solution[1].r, parameters_.sqp_config);
-      solution[1].t = P_ * solution[1].r_hat;
+      solution[1] = sqp_engine::RunSQP(Omega_, solution[1].r, engine_parameters_.sqp_config);
+      solution[1].t = ComputeTranslation(P_, solution[1].r_hat);
       HandleSolution(solution[1], min_sq_error);
 
       c++;
@@ -397,6 +397,58 @@ namespace sqpnl
     }
 
     return true;
+  }
+
+  Eigen::Vector3d PnLSolver::MirzaeiTranslation(const Eigen::Matrix<double, 9, 1>& r_hat)
+  {
+    const int n = static_cast<int>(lines_.size());
+    Eigen::MatrixXd M(2 * n, 4);
+    Eigen::Matrix3d R_cw = Eigen::Map<const Eigen::Matrix<double, 3, 3, Eigen::RowMajor> >(r_hat.data());
+
+    for (int i = 0; i < n; ++i)
+    {
+        const Eigen::Vector3d& Pw = lines_[i].P_hat;
+        const Eigen::Vector3d& Vw = lines_[i].u;
+
+        // rotate line direction to world frame
+        const Eigen::Vector3d nc(projections_[i].n[0], projections_[i].n[1], projections_[i].c);
+        Eigen::Vector3d nw = R_cw * (nc.normalized());
+
+        // 3D line Plücker moment Uw = Pw × Vw
+        Eigen::Vector3d Uw = Pw.cross(Vw);
+
+        const double Vx = Vw.x(), Vy = Vw.y(), Vz = Vw.z();
+        const double nx = nw.x(), ny = nw.y(), nz = nw.z();
+        const double Ux = Uw.x(), Uy = Uw.y(), Uz = Uw.z();
+
+        // Mirzaei’s coefficient matrix derived from n_w^⊤*([t]_x*Vw + Uw) = 0, Uw = Pw x Vw
+	// (two rows per line correspondence)
+        M(2 * i, 0) =  nx * Vz;
+        M(2 * i, 1) =  ny * Vz;
+        M(2 * i, 2) = -nx * Vx - ny * Vy;
+        M(2 * i, 3) =  nx * Uy - ny * Ux;
+
+        M(2 * i + 1, 0) =  ny * Vy + nz * Vz;
+        M(2 * i + 1, 1) = -ny * Vx;
+        M(2 * i + 1, 2) = -nz * Vx;
+        M(2 * i + 1, 3) =  nz * Uy - ny * Uz;
+    }
+
+#if 1
+    // solve M * [t;1] = 0 with SVD
+    Eigen::JacobiSVD<Eigen::MatrixXd> svd(M, Eigen::ComputeFullV);
+    Eigen::Vector4d v = svd.matrixV().col(3); // last column (smallest singular value)
+    Eigen::Vector3d t = v.head<3>() / v(3);
+#else
+    // solve the least squares problem with QR (faster, less stable)
+    Eigen::MatrixXd A = M.leftCols(3);
+    Eigen::VectorXd b = -M.col(3);
+    Eigen::Vector3d t = A.colPivHouseholderQr().solve(b);
+#endif
+
+    t = -R_cw.transpose()*t; // to camera frame
+
+    return t;
   }
 
 } // namespace sqpnl
