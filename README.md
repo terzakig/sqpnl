@@ -37,20 +37,30 @@ To run the PnL example(s), once in the ``build`` directory,
 ``./examples/sqpnl_example``
 
 ## Non-default parameters
-See ``struct SolverParameters`` in ``SQPEngine/sqp_engin/sqp_engine.h`` which contains SQPnL's parameters that can be specified by the caller.
+The parameters controlling SQPnL are of two types, i.e. those of the SQPEngine and those of SQPnL itself.
+See ``struct EngineParameters`` in ``SQPEngine/sqp_engin/sqp_engine.h`` which contains SQPEngine's parameters that can be specified by the caller.
 For instance, to use SVD instead of the default RRQR for the nullspace basis of Omega, the following fragment can be used:
 ```c++
   // call solver with user-specified parameters (and equal weights for all lines).
   // Note that lines and projections can be defined by pairs of points (points1-points2 and projections1-projections2)
-  //  or with vectors of sqpnl::Line and sqpnl::Projection objects. 
-  sqp_engine::SolverParameters params;
-  params.omega_nullspace_method = sqp_engine::OmegaNullspaceMethod::SVD;
-  sqp_engine::PnLSolver solver(points1, points2, projections1, projections2, std::vector<Eigen::Vector3d>(), std::vector<double>(n, 1.0), params);
-  // sqp_engine::PnLSolver solver(lines, projections, std::vector<Eigen::Vector3d>(), std::vector<double>(n, 1.0), params);
+  //  or with vectors of sqpnl::Line and sqpnl::Projection objects.
+  sqp_engine::EngineParameters engine_params;
+  engine_params.omega_nullspace_method = sqp_engine::OmegaNullspaceMethod::SVD;
+  sqp_engine::PnLSolver solver(points1, points2, projections1, projections2, std::vector<Eigen::Vector3d>(), std::vector<double>(n, 1.0), engine_params);
+  // sqp_engine::PnLSolver solver(lines, projections, std::vector<Eigen::Vector3d>(), std::vector<double>(n, 1.0), engine_params); // alt
 ```
 Similarly, to use SVD in place of [FOAM](https://www.researchgate.net/publication/316445722_An_efficient_solution_to_absolute_orientation) for the nearest rotation matrix computations, use
 ```c++
-params.nearest_rotation_method = sqp_engine::NearestRotationMethod::SVD;
+engine_params.nearest_rotation_method = sqp_engine::NearestRotationMethod::SVD;
+```
+For SQPnL's parameters, see ``struct Parameters`` in ``sqpnl/types.h``.
+For example, to specify that the translation should be computed using the formulation of [Mirzaei \& Roumeliotis](https://doi.org/10.1109/ICRA.2011.5980272), use
+```c++
+  sqp_engine::EngineParameters engine_params;
+  // set engine_params...
+  sqpnl::Parameters sqpnl_params;
+  sqpnl_params.translation_method = sqpnl::TranslationMethod::MIRZAEI;
+  sqp_engine::PnLSolver solver(points1, points2, projections1, projections2, std::vector<Eigen::Vector3d>(), std::vector<double>(n, 1.0), engine_params, sqpnl_params);
 ```
 
 ## Cite as

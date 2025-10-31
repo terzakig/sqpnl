@@ -166,7 +166,7 @@ int main()
 
   auto start = std::chrono::steady_clock::now();
 
-  sqp_engine::SolverParameters engine_params;
+  sqp_engine::EngineParameters engine_params;
   engine_params.enable_cheirality_check = true;
   engine_params.omega_nullspace_method = sqp_engine::OmegaNullspaceMethod::RRQR;
   std::vector<double> weights(n, 1.0);

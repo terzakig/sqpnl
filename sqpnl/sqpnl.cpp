@@ -412,17 +412,17 @@ namespace sqpnl
 
         // rotate line direction to world frame
         const Eigen::Vector3d nc(projections_[i].n[0], projections_[i].n[1], projections_[i].c);
-        Eigen::Vector3d nw = R_cw * (nc.normalized());
+        const Eigen::Vector3d nw = R_cw * (nc.normalized());
 
         // 3D line Plücker moment Uw = Pw × Vw
-        Eigen::Vector3d Uw = Pw.cross(Vw);
+        const Eigen::Vector3d Uw = Pw.cross(Vw);
 
         const double Vx = Vw.x(), Vy = Vw.y(), Vz = Vw.z();
         const double nx = nw.x(), ny = nw.y(), nz = nw.z();
         const double Ux = Uw.x(), Uy = Uw.y(), Uz = Uw.z();
 
         // Mirzaei’s coefficient matrix derived from n_w^⊤*([t]_x*Vw + Uw) = 0, Uw = Pw x Vw
-	// (two rows per line correspondence)
+        // (two rows per line correspondence)
         M(2 * i, 0) =  nx * Vz;
         M(2 * i, 1) =  ny * Vz;
         M(2 * i, 2) = -nx * Vx - ny * Vy;

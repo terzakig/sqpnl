@@ -87,7 +87,7 @@ int main()
   auto start = std::chrono::high_resolution_clock::now();
 
   // demonstration of passing parameters to the solver
-  sqp_engine::SolverParameters engine_params;
+  sqp_engine::EngineParameters engine_params;
   engine_params.omega_nullspace_method = sqp_engine::OmegaNullspaceMethod::RRQR;
   sqpnl::Parameters sqpnl_params;
   sqpnl_params.translation_method = sqpnl::TranslationMethod::MIRZAEI;

@@ -61,7 +61,7 @@ namespace sqpnl
         const std::vector<Point2D> &projections1,           //
         const std::vector<Point2D> &projections2,           //
         const std::vector<Pw> &weights = std::vector<Pw>(), //
-        const sqp_engine::SolverParameters &engine_parameters = sqp_engine::SolverParameters(),
+        const sqp_engine::EngineParameters &engine_parameters = sqp_engine::EngineParameters(),
         const Parameters &sqpnl_parameters = Parameters()) : engine_parameters_(engine_parameters), sqpnl_parameters_(sqpnl_parameters)
     {
       const size_t n = points1.size();
@@ -134,7 +134,7 @@ namespace sqpnl
         const std::vector<Projection> &projections,                                                  //
         const std::vector<Eigen::Vector<Pp, 3>> &cheir_points = std::vector<Eigen::Vector<Pp, 3>>(), //
         const std::vector<Pw> &weights = std::vector<Pw>(),                                          //
-        const sqp_engine::SolverParameters &engine_parameters = sqp_engine::SolverParameters(),
+        const sqp_engine::EngineParameters &engine_parameters = sqp_engine::EngineParameters(),
         const Parameters &sqpnl_parameters = Parameters()) : engine_parameters_(engine_parameters), sqpnl_parameters_(sqpnl_parameters)
     {
       const size_t n = lines.size();
@@ -221,7 +221,7 @@ namespace sqpnl
     //! The average of the points on the lines that
     Eigen::Vector3d cheir_points_mean_;
     std::vector<double> weights_;
-    sqp_engine::SolverParameters engine_parameters_;
+    sqp_engine::EngineParameters engine_parameters_;
     Parameters sqpnl_parameters_;
 
     Eigen::Matrix<double, 9, 9> Omega_;
@@ -322,8 +322,8 @@ namespace sqpnl
       {
         case TranslationMethod::OWN: return P * r_hat;
         case TranslationMethod::MIRZAEI: return MirzaeiTranslation(r_hat); // P unused here
+        default: return Eigen::Vector3d::Zero(); // just in case
       }
-      return Eigen::Vector3d::Zero(); // just in case
     }
 
   }; // class PnLSolver
