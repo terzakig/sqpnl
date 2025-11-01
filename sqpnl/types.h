@@ -211,6 +211,22 @@ namespace sqpnl
 #endif
   };
 
+  // Method to use for computing translation given rotation:
+  // OWN selects the method from the SQPnL paper, MIRZAEI that of Mirzaei & Roumeliotis in ICRA 2011
+  enum class TranslationMethod { OWN, MIRZAEI };
+
+  struct Parameters
+  {
+    static const TranslationMethod DEFAULT_TRANSLATION_METHOD;
+
+    TranslationMethod translation_method;
+
+    inline Parameters(
+		    const TranslationMethod& _translation_method = DEFAULT_TRANSLATION_METHOD
+		    ) : translation_method(_translation_method)
+    {}
+  };
+
 }
 
 #endif

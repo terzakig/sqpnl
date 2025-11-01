@@ -87,15 +87,18 @@ int main()
   auto start = std::chrono::high_resolution_clock::now();
 
   // demonstration of passing parameters to the solver
-  sqp_engine::SolverParameters params;
-  params.omega_nullspace_method = sqp_engine::OmegaNullspaceMethod::RRQR;
+  sqp_engine::EngineParameters engine_params;
+  engine_params.omega_nullspace_method = sqp_engine::OmegaNullspaceMethod::RRQR;
+  sqpnl::Parameters sqpnl_params;
+  sqpnl_params.translation_method = sqpnl::TranslationMethod::MIRZAEI;
   // equal weights for all points
   sqpnl::PnLSolver solver(                      //
       lines,                                    //
       line_projections,                         //
       std::vector<Eigen::Vector3d>(),  //
       std::vector<double>(nlines, 1.0), //
-      params);
+      engine_params,
+      sqpnl_params);
 
   auto stop = std::chrono::high_resolution_clock::now();
 
