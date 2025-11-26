@@ -118,16 +118,22 @@ namespace sqpnl
     {
     }
 
-    //! Construct from points on the Euclidean proj. plane at Z=1
-    inline Projection(const Eigen::Vector2d &_p1, const Eigen::Vector2d &_p2) :                                         //
-                                                                                Line(                                   //
-                                                                                    Eigen::Vector3d(_p1[0], _p1[1], 1), //
-                                                                                    Eigen::Vector3d(_p2[0], _p2[1], 1))
+    //! Construct from points (sx, ex) on the Euclidean proj. plane at Z=1
+    inline Projection(double s1, double e1, double s2, double e2) :                                  //
+                                                                    Line(                            //
+                                                                        Eigen::Vector3d(s1, e1, 1.), //
+                                                                        Eigen::Vector3d(s2, e2, 1.))
     {
-      n[0] = -u[1];
-      n[1] = u[0];
-      n.normalize();
-      c = (abs(n[0]) > abs(n[1])) ? -P_hat[0] / n[0] : -P_hat[1] / n[1];
+      init_nc();
+    }
+
+     //! Construct from points on the Euclidean proj. plane at Z=1
+    inline Projection(const Eigen::Vector2d &_p1, const Eigen::Vector2d &_p2) :                                          //
+                                                                                Line(                                    //
+                                                                                    Eigen::Vector3d(_p1[0], _p1[1], 1.), //
+                                                                                    Eigen::Vector3d(_p2[0], _p2[1], 1.))
+    {
+      init_nc();
     }
 
     //! Construct a projection from a line
@@ -148,10 +154,8 @@ namespace sqpnl
         P_hat = iD * (line.P_hat[2] * line.P_hat + line.u[2] * line.u);
         u = isqrtD * (-line.u[2] * line.P_hat + line.P_hat[2] * line.u);
       }
-      n[0] = -u[1];
-      n[1] = u[0];
-      n.normalize();
-      c = (abs(n[0]) > abs(n[1])) ? -P_hat[0] / n[0] : -P_hat[1] / n[1];
+
+      init_nc();
     }
 
     //! Construct projection from Hesse coordinates (line equation as constant and 2D normal vector)
@@ -177,15 +181,12 @@ namespace sqpnl
 
 #ifdef HAVE_OPENCV
     //! Construct from points on the Euclidean proj. plane at Z=1 with OpenCV types
-    inline Projection(const cv::Vec<double, 2> &_p1, const cv::Vec<double, 2> &_p2) :                                         //
-                                                                                      Line(                                   //
-                                                                                          Eigen::Vector3d(_p1[0], _p1[1], 1), //
-                                                                                          Eigen::Vector3d(_p2[0], _p2[1], 1))
+    inline Projection(const cv::Vec<double, 2> &_p1, const cv::Vec<double, 2> &_p2) :                                          //
+                                                                                      Line(                                    //
+                                                                                          Eigen::Vector3d(_p1[0], _p1[1], 1.), //
+                                                                                          Eigen::Vector3d(_p2[0], _p2[1], 1.))
     {
-      n[0] = -u[1];
-      n[1] = u[0];
-      n.normalize();
-      c = (abs(n[0]) > abs(n[1])) ? -P_hat[0] / n[0] : -P_hat[1] / n[1];
+      init_nc();
     }
 
     //! Construct projection from Hesse coordinates (line equation as constant and 2D normal vector) in OpenCV vectors
@@ -209,6 +210,16 @@ namespace sqpnl
       return Projection(c, n);
     }
 #endif
+
+    private:
+
+    inline void init_nc()
+    {
+      n[0] = -u[1];
+      n[1] = u[0];
+      n.normalize();
+      c = (abs(n[0]) > abs(n[1])) ? -P_hat[0] / n[0] : -P_hat[1] / n[1];
+    }
   };
 
   // Method to use for computing translation given rotation:
