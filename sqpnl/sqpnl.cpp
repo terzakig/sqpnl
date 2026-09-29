@@ -20,7 +20,7 @@ namespace sqpnl
   const double PnLSolver::SQRT3 = std::sqrt(3.0);
 
   void PnLSolver::AccumulateDataMatrices(          //
-      const double &w,                             //
+      const double w,                              //
       const Line &line,                            //
       const Projection &projection,                //
       const Eigen::Vector3d &cheir_point,          //
@@ -203,7 +203,7 @@ namespace sqpnl
   }
 
   void PnLSolver::FinalizeDataMatrices(      //
-      const double &sum_w,                   //
+      const double sum_w,                    //
       Eigen::Matrix<double, 3, 3> &sum_BBt,  //
       Eigen::Matrix<double, 3, 9> &sum_BBtM, //
       const Eigen::Matrix<double, 3, 9> &sum_M)
@@ -329,6 +329,9 @@ namespace sqpnl
 
   bool PnLSolver::Solve()
   {
+    // clear solutions
+    num_solutions_ = 0;
+
     if (!flag_valid_)
     {
       return false;
@@ -336,8 +339,6 @@ namespace sqpnl
 
     double min_sq_error = std::numeric_limits<double>::max();
     int num_eigen_points = num_null_vectors_ > 0 ? num_null_vectors_ : 1;
-    // clear solutions
-    num_solutions_ = 0;
 
     for (int i = 9 - num_eigen_points; i < 9; i++)
     {

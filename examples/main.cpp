@@ -209,5 +209,5 @@ int main()
   std::cout << " Maximum squared error : " << max_sq_error << std::endl;
   std::cout << " Maximum average squared projection error : " << max_sq_proj_error << std::endl;
 
-  return 1;
+  return 0;
 }

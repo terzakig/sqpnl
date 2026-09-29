@@ -15,10 +15,12 @@
 #ifndef SQPnL_H__
 #define SQPnL_H__
 
-#include "types.h"
 #include <vector>
 #include <assert.h>
 #include <iostream>
+#include <functional>
+
+#include "types.h"
 
 namespace sqpnl
 {
@@ -81,7 +83,7 @@ namespace sqpnl
           std::cerr << "SQPnL: Invalid weights vector size!\n" << std::flush;
           return;
         }
-        weights_ = weights;
+        weights_.assign(weights.begin(), weights.end());
       }
       else
       {
@@ -109,6 +111,7 @@ namespace sqpnl
       for (size_t i = 0; i < n; i++)
       {
         const double w = weights_[i];
+        assert(w >= 0.0);
         lines_.emplace_back(points1[i], points2[i]);
         projections_.emplace_back(projections1[i], projections2[i]);
 
@@ -121,6 +124,12 @@ namespace sqpnl
 
         // Populate Omega, Sum(B*B'), Sum(B*B'*M), sum_w, cheir_points_mean
         AccumulateDataMatrices(w, lines_[i], projections_[i], cheir_points_[i], sum_w, cheir_points_mean_, sum_BBt, sum_BBtM, sum_M);
+      }
+      if (sum_w <= 0.0)
+      {
+        flag_valid_ = false;
+        std::cerr << "SQPnL: No data points with w > 0!\n" << std::flush;
+        return;
       }
 
       // Finalize data matrices (fill lower triangles, etc.)
@@ -154,7 +163,7 @@ namespace sqpnl
           std::cerr << "SQPnL: Invalid weights vector size!\n" << std::flush;
           return;
         }
-        weights_ = weights;
+        weights_.assign(weights.begin(), weights.end());
       }
       else
       {
@@ -182,6 +191,7 @@ namespace sqpnl
       for (size_t i = 0; i < n; i++)
       {
         const double w = weights_[i];
+        assert(w >= 0.0);
         lines_.emplace_back(lines[i]);
         projections_.emplace_back(projections[i]);
 
@@ -201,6 +211,12 @@ namespace sqpnl
 
         // Populate Omega, Sum(B*B'), Sum(B*B'*M), sum_w, cheir_points_mean
         AccumulateDataMatrices(w, lines_[i], projections_[i], cheir_points_[i], sum_w, cheir_points_mean_, sum_BBt, sum_BBtM, sum_M);
+      }
+      if (sum_w <= 0.0)
+      {
+        flag_valid_ = false;
+        std::cerr << "SQPnL: No data points with w > 0!\n" << std::flush;
+        return;
       }
 
       // Finalize data matrices (fill lower triangles, etc.)
@@ -242,7 +258,7 @@ namespace sqpnl
 
     //! Populate data matrices Omega and P in a single iteration
     void AccumulateDataMatrices(               //
-        const double &w,                       //
+        const double w,                        //
         const Line &line,                      //
         const Projection &projection,          //
         const Eigen::Vector3d &cheir_point,    //
@@ -254,7 +270,7 @@ namespace sqpnl
 
     //! Finalize the computations for Omega and P (used to recover translation from rotation)
     void FinalizeDataMatrices(                 //
-        const double &sum_w,                   //
+        const double sum_w,                    //
         Eigen::Matrix<double, 3, 3> &sum_BBt,  //
         Eigen::Matrix<double, 3, 9> &sum_BBtM, //
         const Eigen::Matrix<double, 3, 9> &sum_M);
