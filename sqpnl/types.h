@@ -1,5 +1,5 @@
 //
-// Types.h
+// types.h
 //
 // Implementation of SQPnL as described in the paper:
 //
@@ -10,8 +10,8 @@
 // George Terzakis, May, 2025
 //
 
-#ifndef _SQPNLTYPES__H_
-#define _SQPNLTYPES__H_
+#ifndef SQPNLTYPES__H_
+#define SQPNLTYPES__H_
 
 #ifdef HAVE_OPENCV
 
@@ -218,7 +218,7 @@ namespace sqpnl
       n[0] = -u[1];
       n[1] = u[0];
       n.normalize();
-      c = (abs(n[0]) > abs(n[1])) ? -P_hat[0] / n[0] : -P_hat[1] / n[1];
+      c = (fabs(n[0]) > fabs(n[1])) ? -P_hat[0] / n[0] : -P_hat[1] / n[1];
     }
   };
 

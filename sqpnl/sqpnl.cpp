@@ -12,6 +12,7 @@
 // Optimizations by Manolis Lourakis, February 2022, February 2024
 //
 
+#include <limits.h>
 #include "sqpnl.h"
 
 namespace sqpnl
@@ -32,7 +33,7 @@ namespace sqpnl
   {
     sum_w += w;
 
-    cheir_points_mean_ += w * cheir_point; // @TODO: Should we weight the average for cheirality purposes?
+    cheir_points_mean += w * cheir_point; // @TODO: Should we weight the average for cheirality purposes?
 
     const double squ1 = line.u[0] * line.u[0], //
         u1u2 = line.u[0] * line.u[1],          //
@@ -146,7 +147,7 @@ namespace sqpnl
     Bi(2, 1) = projection.u[2];
 
     Eigen::Matrix<double, 3, 3> BBt;
-    BBt(0, 0) = Bi(0, 0) * Bi(0, 0) + Bi(0, 1) * Bi(1, 0);
+    BBt(0, 0) = Bi(0, 0) * Bi(0, 0) + Bi(0, 1) * Bi(0, 1);
     BBt(0, 1) = Bi(0, 0) * Bi(1, 0) + Bi(0, 1) * Bi(1, 1);
     BBt(0, 2) = Bi(0, 0) * Bi(2, 0) + Bi(0, 1) * Bi(2, 1);
 
@@ -241,33 +242,7 @@ namespace sqpnl
     }
 
     // Finally, decompose Omega with the chosen method
-    if (engine_parameters_.omega_nullspace_method == sqp_engine::OmegaNullspaceMethod::RRQR)
-    {
-      // Rank revealing QR nullspace computation with full pivoting.
-      // This is slightly less accurate compared to SVD but x2 faster
-      Eigen::FullPivHouseholderQR<Eigen::Matrix<double, 9, 9>> rrqr(Omega_);
-      U_ = rrqr.matrixQ();
-
-      Eigen::Matrix<double, 9, 9> R = rrqr.matrixQR().template triangularView<Eigen::Upper>();
-      s_ = R.diagonal().array().abs();
-    }
-    else if (engine_parameters_.omega_nullspace_method == sqp_engine::OmegaNullspaceMethod::CPRRQR)
-    {
-      // Rank revealing QR nullspace computation with column pivoting.
-      // This is potentially less accurate compared to RRQR but faster
-      Eigen::ColPivHouseholderQR<Eigen::Matrix<double, 9, 9>> cprrqr(Omega_);
-      U_ = cprrqr.householderQ();
-
-      Eigen::Matrix<double, 9, 9> R = cprrqr.matrixR().template triangularView<Eigen::Upper>();
-      s_ = R.diagonal().array().abs();
-    }
-    else // if ( engine_parameters_.omega_nullspace_method == sqp_engine::OmegaNullspaceMethod::SVD )
-    {
-      // SVD-based nullspace computation. This is the most accurate but slowest option
-      Eigen::JacobiSVD<Eigen::Matrix<double, 9, 9>> svd(Omega_, Eigen::ComputeFullU);
-      U_ = svd.matrixU();
-      s_ = svd.singularValues();
-    }
+    engine_parameters_.computeNullSpace(Omega_, U_, s_);
 
     // Find dimension of null space; the check guards against overly large rank_tolerance
     while (7 - num_null_vectors_ >= 0 && s_[7 - num_null_vectors_] < engine_parameters_.rank_tolerance)
@@ -352,6 +327,7 @@ namespace sqpnl
       if (orthogonality_sq_error < engine_parameters_.orthogonality_squared_error_threshold)
       {
         solution[0].r_hat = sqp_engine::Determinant9x1(e) * e;
+        solution[0].r = solution[0].r_hat;
         solution[0].t = ComputeTranslation(P_, solution[0].r_hat);
         solution[0].num_iterations = 0;
 

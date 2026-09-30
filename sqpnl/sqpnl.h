@@ -1,5 +1,5 @@
 //
-// sqpnp.h
+// sqpnl.h
 //
 // Implementation of the SQPnL algorithm:
 //
@@ -93,13 +93,11 @@ namespace sqpnl
       flag_valid_ = true;
       lines_.reserve(n);
       projections_.reserve(n);
-      num_null_vectors_ = -1; // set to -1 in case we never make it to the decomposition of Omega
       Omega_ = Eigen::Matrix<double, 9, 9>::Zero();
 
       // Sum of weights
       double sum_w = 0.0;
 
-      Omega_ = Eigen::Matrix<double, 9, 9>::Zero();
       Eigen::Matrix<double, 3, 3> sum_BBt = Eigen::Matrix<double, 3, 3>::Zero();
       Eigen::Matrix<double, 3, 9> sum_BBtM = Eigen::Matrix<double, 3, 9>::Zero();
       Eigen::Matrix<double, 3, 9> sum_M = Eigen::Matrix<double, 3, 9>::Zero();
@@ -117,7 +115,7 @@ namespace sqpnl
 
         cheir_points_.emplace_back(0.5 * (points1[i] + points2[i]));
 
-        if (abs(w) < 1e-6)
+        if (fabs(w) < 1e-6)
         {
           continue;
         }
@@ -173,13 +171,18 @@ namespace sqpnl
       flag_valid_ = true;
       lines_.reserve(n);
       projections_.reserve(n);
-      num_null_vectors_ = -1; // set to -1 in case we never make it to the decomposition of Omega
       Omega_ = Eigen::Matrix<double, 9, 9>::Zero();
+
+      if (!cheir_points.empty() && n != cheir_points.size())
+      {
+        flag_valid_ = false;
+        std::cerr << "SQPnL: Invalid cheirality points vector size!\n" << std::flush;
+        return;
+      }
 
       // Sum of weights
       double sum_w = 0.0;
 
-      Omega_ = Eigen::Matrix<double, 9, 9>::Zero();
       Eigen::Matrix<double, 3, 3> sum_BBt = Eigen::Matrix<double, 3, 3>::Zero();
       Eigen::Matrix<double, 3, 9> sum_BBtM = Eigen::Matrix<double, 3, 9>::Zero();
       Eigen::Matrix<double, 3, 9> sum_M = Eigen::Matrix<double, 3, 9>::Zero();
@@ -204,7 +207,7 @@ namespace sqpnl
           cheir_points_.emplace_back(cheir_points[i][0], cheir_points[i][1], cheir_points[i][2]);
         }
 
-        if (abs(w) < 1e-6)
+        if (fabs(w) < 1e-6)
         {
           continue;
         }
@@ -234,7 +237,7 @@ namespace sqpnl
     std::vector<Line> lines_;
     //! The cheirality points. Either computed from the lines or provided as a constructor argument.
     std::vector<Eigen::Vector3d> cheir_points_;
-    //! The average of the points on the lines that
+    //! The mean of the points on the lines that are used in a cheirality test
     Eigen::Vector3d cheir_points_mean_;
     std::vector<double> weights_;
     sqp_engine::EngineParameters engine_parameters_;
@@ -246,12 +249,12 @@ namespace sqpnl
     Eigen::Matrix<double, 9, 9> U_;
     Eigen::Matrix<double, 3, 9> P_;
 
-    int num_null_vectors_;
+    int num_null_vectors_ = -1;
 
-    bool flag_valid_;
+    bool flag_valid_ = false;
 
     sqp_engine::SQPSolution solutions_[18];
-    int num_solutions_;
+    int num_solutions_ = 0;
 
     //! Nearest rotation matrix function. By default, the FOAM method
     std::function<void(const Eigen::Matrix<double, 9, 1> &, Eigen::Matrix<double, 9, 1> &)> NearestRotationMatrix;
@@ -292,7 +295,7 @@ namespace sqpnl
                      Yc = r[3] * M[0] + r[4] * M[1] + r[5] * M[2] + t[1],
                      inv_Zc = 1.0 / (r[6] * M[0] + r[7] * M[1] + r[8] * M[2] + t[2]);
 
-        const double dist = abs(projections_[i].n[0] * Xc * inv_Zc + projections_[i].n[1] * Yc * inv_Zc + projections_[i].c);
+        const double dist = projections_[i].n[0] * Xc * inv_Zc + projections_[i].n[1] * Yc * inv_Zc + projections_[i].c;
         avg += dist * dist;
       }
 
@@ -301,30 +304,38 @@ namespace sqpnl
 
     //
     // Test cheirality on the mean point for a given solution
-    inline bool TestPositiveDepth(const sqp_engine::SQPSolution &solution)
+    // r_transposed indicates if r_hat contains R^t or R
+    inline bool TestPositiveDepth(const sqp_engine::SQPSolution &solution, bool r_transposed = true)
     {
       const auto &r = solution.r_hat;
       const auto &t = solution.t;
       const auto &M = cheir_points_mean_;
-      return (r[6] * M[0] + r[7] * M[1] + r[8] * M[2] + t[2] > 0);
+      return r_transposed ? (r[2] * M[0] + r[5] * M[1] + r[8] * M[2] + t[2] > 0) :
+                            (r[6] * M[0] + r[7] * M[1] + r[8] * M[2] + t[2] > 0);
     }
 
     //
     // Test cheirality on the majority of points for a given solution
-    inline bool TestPositiveMajorityDepths(const sqp_engine::SQPSolution &solution)
+    // r_transposed indicates if r_hat contains R^t or R
+    inline bool TestPositiveMajorityDepths(const sqp_engine::SQPSolution &solution, bool r_transposed = true)
     {
       const auto &r = solution.r_hat;
       const auto &t = solution.t;
       int npos = 0, nneg = 0;
 
+      // R's third row
+      const auto r20 = r_transposed ? r[2] : r[6];
+      const auto r21 = r_transposed ? r[5] : r[7];
+      const auto r22 = r[8];
+
       for (size_t i = 0; i < lines_.size(); i++)
       {
-        if (abs(weights_[i]) < 1e-6)
+        if (fabs(weights_[i]) < 1e-6)
         {
           continue;
         }
         const auto &M = cheir_points_[i];
-        (r[6] * M[0] + r[7] * M[1] + r[8] * M[2] + t[2] > 0) ? ++npos : ++nneg;
+        (r20 * M[0] + r21 * M[1] + r22 * M[2] + t[2] > 0) ? ++npos : ++nneg;
       }
 
       return npos >= nneg;

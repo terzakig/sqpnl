@@ -1,8 +1,8 @@
 set(CXX_FLAGS "-Wall")
-set(CMAKE_CXX_FLAGS, "${CXX_FLAGS}")
+set(CMAKE_CXX_FLAGS "${CXX_FLAGS}")
 
 
-find_package(Eigen3 REQUIRED)
+find_package(Eigen3 3.4 REQUIRED)
 list(APPEND INCLUDE_DIRS ${EIGEN3_INCLUDE_DIR})
 
 add_subdirectory(SQPEngine)
