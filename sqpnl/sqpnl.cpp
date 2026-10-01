@@ -165,7 +165,7 @@ namespace sqpnl
 
     sum_BBt(2, 2) += w * BBt(2, 2);
 
-    // Sum(wi*Bi*Bi'*Mi) where the matrix Mi is such that. Mi*r = R'*Pi (Pi is the line's Pi_hat)
+    // Sum(wi*Bi*Bi'*Mi) where Mi is such that Mi*r = R'*Pi (Pi is the line's Pi_hat and r the vector for R_wc = R_cw')
     const double X = line.P_hat[0] + 0.5 * line.u[0];
     const double Y = line.P_hat[1] + 0.5 * line.u[1];
     const double Z = line.P_hat[2] + 0.5 * line.u[2];
@@ -241,6 +241,13 @@ namespace sqpnl
       }
     }
 
+    // reject non-finite data (e.g., NaN/inf inputs or degenerate projections), before they propagate to SQP
+    if (!Omega_.allFinite())
+    {
+      flag_valid_ = false;
+      std::cerr << "SQPnL: Non-finite data matrix (degenerate lines or projections?)\n" << std::flush;
+      return;
+    }
     // Finally, decompose Omega with the chosen method
     engine_parameters_.computeNullSpace(Omega_, U_, s_);
 
@@ -376,20 +383,32 @@ namespace sqpnl
     return true;
   }
 
-  Eigen::Vector3d PnLSolver::MirzaeiTranslation(const Eigen::Matrix<double, 9, 1>& r_hat)
+  // translation with M-R weighted formulation; r_hat assumed to hold R_cw^t
+  Eigen::Vector3d PnLSolver::MirzaeiTranslation(const Eigen::Matrix<double, 9, 1>& r_hat) const
   {
     const int n = static_cast<int>(lines_.size());
-    Eigen::MatrixXd M(2 * n, 4);
-    Eigen::Matrix3d R_cw = Eigen::Map<const Eigen::Matrix<double, 3, 3, Eigen::RowMajor> >(r_hat.data());
-
+    // lines with (near) zero weight are excluded
+    int num_active = 0;
     for (int i = 0; i < n; ++i)
     {
+      if (fabs(weights_[i]) >= 1e-6)
+        ++num_active;
+    }
+
+    Eigen::MatrixXd M(2 * num_active, 4);
+    Eigen::Matrix3d R_wc = Eigen::Map<const Eigen::Matrix<double, 3, 3, Eigen::RowMajor> >(r_hat.data());
+
+    for (int i = 0, j = 0; i < n; ++i)
+    {
+        const double w = fabs(weights_[i]);
+        if (w < 1e-6) continue;
+
         const Eigen::Vector3d& Pw = lines_[i].P_hat;
         const Eigen::Vector3d& Vw = lines_[i].u;
 
         // rotate line direction to world frame
         const Eigen::Vector3d nc(projections_[i].n[0], projections_[i].n[1], projections_[i].c);
-        const Eigen::Vector3d nw = R_cw * (nc.normalized());
+        const Eigen::Vector3d nw = R_wc * (nc.normalized());
 
         // 3D line Plücker moment Uw = Pw × Vw
         const Eigen::Vector3d Uw = Pw.cross(Vw);
@@ -400,15 +419,19 @@ namespace sqpnl
 
         // Mirzaei’s coefficient matrix derived from n_w^⊤*([t]_x*Vw + Uw) = 0, Uw = Pw x Vw
         // (two rows per line correspondence)
-        M(2 * i, 0) =  nx * Vz;
-        M(2 * i, 1) =  ny * Vz;
-        M(2 * i, 2) = -nx * Vx - ny * Vy;
-        M(2 * i, 3) =  nx * Uy - ny * Ux;
+        M(2 * j, 0) =  nx * Vz;
+        M(2 * j, 1) =  ny * Vz;
+        M(2 * j, 2) = -nx * Vx - ny * Vy;
+        M(2 * j, 3) =  nx * Uy - ny * Ux;
 
-        M(2 * i + 1, 0) =  ny * Vy + nz * Vz;
-        M(2 * i + 1, 1) = -ny * Vx;
-        M(2 * i + 1, 2) = -nz * Vx;
-        M(2 * i + 1, 3) =  nz * Uy - ny * Uz;
+        M(2 * j + 1, 0) =  ny * Vy + nz * Vz;
+        M(2 * j + 1, 1) = -ny * Vx;
+        M(2 * j + 1, 2) = -nz * Vx;
+        M(2 * j + 1, 3) =  nz * Uy - ny * Uz;
+
+        // line's two rows are scaled by sqrt(w), so that squared residuals are weighted by w
+        M.middleRows<2>(2 * j) *= std::sqrt(w);
+        ++j;
     }
 
 #if 1
@@ -423,7 +446,7 @@ namespace sqpnl
     Eigen::Vector3d t = A.colPivHouseholderQr().solve(b);
 #endif
 
-    t = -R_cw.transpose()*t; // to camera frame
+    t = -R_wc.transpose()*t; // to camera frame
 
     return t;
   }

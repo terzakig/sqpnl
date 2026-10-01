@@ -139,9 +139,13 @@ namespace sqpnl
     //! Construct a projection from a line
     inline Projection(const Line &line)
     {
-      const double D = line.P_hat[2] * line.P_hat[2] + line.u[2] * line.u[2];
+      // the projection depends only on the plane through the center and the line,
+      // so it does not change if P_hat is scaled; formulas below assume |P| = 1
+      const double norm_P = line.P_hat.norm();
+      const Eigen::Vector3d P = norm_P > 1e-10 ? Eigen::Vector3d(line.P_hat / norm_P) : line.P_hat;
+      const double D = P[2] * P[2] + line.u[2] * line.u[2];
 
-      if (D < 1e-10)
+      if (D < 1e-10) // line lies in plane Z=0 through center, its projection at infinity
       {
         P_hat = line.P_hat;
         P_hat[2] = 1;
@@ -151,8 +155,8 @@ namespace sqpnl
       {
         const double iD = 1.0 / D;
         const double isqrtD = sqrt(iD);
-        P_hat = iD * (line.P_hat[2] * line.P_hat + line.u[2] * line.u);
-        u = isqrtD * (-line.u[2] * line.P_hat + line.P_hat[2] * line.u);
+        P_hat = iD * (P[2] * P + line.u[2] * line.u);
+        u = isqrtD * (-line.u[2] * P + P[2] * line.u);
       }
 
       init_nc();
@@ -161,6 +165,11 @@ namespace sqpnl
     //! Construct projection from Hesse coordinates (line equation as constant and 2D normal vector)
     inline Projection(const double &_c, const Eigen::Vector2d &_n) : c(_c), n(_n)
     {
+      // account for non-unit n
+      const double inv_norm = 1.0 / n.norm();
+      n *= inv_norm;
+      c *= inv_norm;
+
       P_hat[0] = -c * n[0];
       P_hat[1] = -c * n[1];
       P_hat[2] = 1;

@@ -68,10 +68,16 @@ namespace sqpnl
     {
       const size_t n = points1.size();
 
-      if (n != points2.size() || n != projections1.size() || n != projections2.size() || n < 3)
+      if (n != points2.size() || n != projections1.size() || n != projections2.size())
       {
         flag_valid_ = false;
         std::cerr << "SQPnL: Mismatching data vector sizes!\n" << std::flush;
+        return;
+      }
+      if (n < 3)
+      {
+        flag_valid_ = false;
+        std::cerr << "SQPnL: At least 3 line correspondences are required!\n" << std::flush;
         return;
       }
 
@@ -113,7 +119,8 @@ namespace sqpnl
         lines_.emplace_back(points1[i], points2[i]);
         projections_.emplace_back(projections1[i], projections2[i]);
 
-        cheir_points_.emplace_back(0.5 * (points1[i] + points2[i]));
+        const Point3D mid = 0.5 * (points1[i] + points2[i]);
+        cheir_points_.emplace_back(mid[0], mid[1], mid[2]);
 
         if (fabs(w) < 1e-6)
         {
@@ -146,10 +153,16 @@ namespace sqpnl
     {
       const size_t n = lines.size();
 
-      if (n != projections.size() || n < 3)
+      if (n != projections.size())
       {
         flag_valid_ = false;
         std::cerr << "SQPnL: Mismatching data vector sizes!\n" << std::flush;
+        return;
+      }
+      if (n < 3)
+      {
+        flag_valid_ = false;
+        std::cerr << "SQPnL: At least 3 line correspondences are required!\n" << std::flush;
         return;
       }
 
@@ -229,9 +242,6 @@ namespace sqpnl
     //! Solve the PnL
     bool Solve();
 
-    //! Solve for translation using Mirzaei & Roumeliotis LS formulation
-    Eigen::Vector3d MirzaeiTranslation(const Eigen::Matrix<double, 9, 1>& r_hat);
-
   private:
     std::vector<Projection> projections_;
     std::vector<Line> lines_;
@@ -258,6 +268,9 @@ namespace sqpnl
 
     //! Nearest rotation matrix function. By default, the FOAM method
     std::function<void(const Eigen::Matrix<double, 9, 1> &, Eigen::Matrix<double, 9, 1> &)> NearestRotationMatrix;
+
+    //! Solve for translation using Mirzaei & Roumeliotis LS formulation
+    Eigen::Vector3d MirzaeiTranslation(const Eigen::Matrix<double, 9, 1>& r_hat) const;
 
     //! Populate data matrices Omega and P in a single iteration
     void AccumulateDataMatrices(               //
