@@ -12,7 +12,7 @@
 // Optimizations by Manolis Lourakis, February 2022, February 2024
 //
 
-#include <limits.h>
+#include <limits>
 #include "sqpnl.h"
 
 namespace sqpnl
@@ -227,7 +227,12 @@ namespace sqpnl
     // Q = sum(wi)*eye(3) - Sum(Bi*Bi')
     Eigen::Matrix<double, 3, 3> Q = sum_w * Eigen::Matrix<double, 3, 3>::Identity() - sum_BBt;
     Eigen::Matrix<double, 3, 3> Qinv;
-    sqp_engine::InvertSymmetric3x3(Q, Qinv);
+    if (!sqp_engine::InvertSymmetric3x3(Q, Qinv))
+    {
+      flag_valid_ = false;
+      std::cerr << "SQPnL: Singular Q!\n" << std::flush;
+      return;
+    }
 
     // Compute P = -inv( Sum(wi)*eye(3)-Sum(wi*Bi*Bi') ) * ( Sum(wi*Mi) - Sum(wi*Bi*Bi'*Mi) ) = -Qinv * sum_BBtM
     P_ = -Qinv * (sum_M - sum_BBtM);
@@ -395,7 +400,7 @@ namespace sqpnl
         ++num_active;
     }
 
-    Eigen::MatrixXd M(2 * num_active, 4);
+    Eigen::MatrixXd M(3 * num_active, 4);
     Eigen::Matrix3d R_wc = Eigen::Map<const Eigen::Matrix<double, 3, 3, Eigen::RowMajor> >(r_hat.data());
 
     for (int i = 0, j = 0; i < n; ++i)
@@ -406,7 +411,7 @@ namespace sqpnl
         const Eigen::Vector3d& Pw = lines_[i].P_hat;
         const Eigen::Vector3d& Vw = lines_[i].u;
 
-        // rotate line direction to world frame
+        // rotate interpretation plane normal to world frame
         const Eigen::Vector3d nc(projections_[i].n[0], projections_[i].n[1], projections_[i].c);
         const Eigen::Vector3d nw = R_wc * (nc.normalized());
 
@@ -417,20 +422,25 @@ namespace sqpnl
         const double nx = nw.x(), ny = nw.y(), nz = nw.z();
         const double Ux = Uw.x(), Uy = Uw.y(), Uz = Uw.z();
 
-        // Mirzaei’s coefficient matrix derived from n_w^⊤*([t]_x*Vw + Uw) = 0, Uw = Pw x Vw
-        // (two rows per line correspondence)
-        M(2 * j, 0) =  nx * Vz;
-        M(2 * j, 1) =  ny * Vz;
-        M(2 * j, 2) = -nx * Vx - ny * Vy;
-        M(2 * j, 3) =  nx * Uy - ny * Ux;
+        // Mirzaei’s coefficient matrix derived from E == n_w × (Uw - C × Vw) = 0, Uw = Pw x Vw
+        // (3 rows per line correspondence: E_z, -E_x, E_y)
+        M(3 * j, 0) =  nx * Vz;
+        M(3 * j, 1) =  ny * Vz;
+        M(3 * j, 2) = -nx * Vx - ny * Vy;
+        M(3 * j, 3) =  nx * Uy - ny * Ux;
 
-        M(2 * j + 1, 0) =  ny * Vy + nz * Vz;
-        M(2 * j + 1, 1) = -ny * Vx;
-        M(2 * j + 1, 2) = -nz * Vx;
-        M(2 * j + 1, 3) =  nz * Uy - ny * Uz;
+        M(3 * j + 1, 0) =  ny * Vy + nz * Vz;
+        M(3 * j + 1, 1) = -ny * Vx;
+        M(3 * j + 1, 2) = -nz * Vx;
+        M(3 * j + 1, 3) =  nz * Uy - ny * Uz;
 
-        // line's two rows are scaled by sqrt(w), so that squared residuals are weighted by w
-        M.middleRows<2>(2 * j) *= std::sqrt(w);
+        M(3 * j + 2, 0) =  nx * Vy;
+        M(3 * j + 2, 1) = -nx * Vx - nz * Vz;
+        M(3 * j + 2, 2) =  nz * Vy;
+        M(3 * j + 2, 3) =  nz * Ux - nx * Uz;
+
+        // line's rows are scaled by sqrt(w), so that squared residuals are weighted by w
+        M.middleRows<3>(3 * j) *= std::sqrt(w);
         ++j;
     }
 

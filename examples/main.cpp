@@ -1,4 +1,6 @@
 #include <iostream>
+#include <algorithm>
+#include <utility>
 #include <cmath>
 #include <sqpnl.h>
 #include <opencv2/core.hpp>
@@ -177,7 +179,6 @@ int main()
     if (solver.IsValid())
     {
       solver.Solve();
-
       if (solver.SolutionPtr(0))
       {
         max_sq_error = std::max(max_sq_error, solver.SolutionPtr(0)->sq_error);

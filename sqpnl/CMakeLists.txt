@@ -1,6 +1,3 @@
-set(CXX_FLAGS "-Wall")
-set(CMAKE_CXX_FLAGS "${CXX_FLAGS}")
-
 
 find_package(Eigen3 3.4 REQUIRED)
 list(APPEND INCLUDE_DIRS ${EIGEN3_INCLUDE_DIR})
@@ -16,5 +13,6 @@ add_library (SQPnL
     sqpnl.h
     types.h)
 
+target_compile_options(SQPnL PRIVATE -Wall)
 target_link_libraries(SQPnL SQPEngine)
 target_include_directories(SQPnL PUBLIC ${SQPNL_INCLUDE_DIRS})

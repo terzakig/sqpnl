@@ -1,5 +1,3 @@
-set(CXX_FLAGS "-Wall")
-set(CMAKE_CXX_FLAGS "${CXX_FLAGS}")
 
 set(INCLUDE_DIRS ${CMAKE_SOURCE_DIR})
 
@@ -22,4 +20,5 @@ endif(OpenCV_FOUND)
 list(APPEND LIBS SQPnL)
 
 add_executable(sqpnl_example ${sources})
+target_compile_options(sqpnl_example PRIVATE -Wall)
 target_link_libraries(sqpnl_example ${LIBS})

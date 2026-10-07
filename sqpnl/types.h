@@ -163,7 +163,7 @@ namespace sqpnl
     }
 
     //! Construct projection from Hesse coordinates (line equation as constant and 2D normal vector)
-    inline Projection(const double &_c, const Eigen::Vector2d &_n) : c(_c), n(_n)
+    inline Projection(double _c, const Eigen::Vector2d &_n) : c(_c), n(_n)
     {
       // account for non-unit n
       const double inv_norm = 1.0 / n.norm();
@@ -199,14 +199,9 @@ namespace sqpnl
     }
 
     //! Construct projection from Hesse coordinates (line equation as constant and 2D normal vector) in OpenCV vectors
-    inline Projection(const double &_c, const cv::Vec<double, 2> &_n) : c(_c), n(Eigen::Vector2d(_n[0], _n[1]))
+    inline Projection(double _c, const cv::Vec<double, 2> &_n) : // delegate
+                                                                 Projection(_c, Eigen::Vector2d(_n[0], _n[1]))
     {
-      P_hat[0] = -c * n[0];
-      P_hat[1] = -c * n[1];
-      P_hat[2] = 1;
-      u[0] = -n[1];
-      u[1] = n[0];
-      u[2] = 0;
     }
 
     //! Build projection from 2D point and direction in OpenCV vectors
